@@ -1,0 +1,30 @@
+{% extends 'myapp/base.html' %}
+
+{% block myheader %}
+  <h1>My Profile</h1>
+{% endblock myheader %}
+
+{% block content %}
+  <div class="form-group mb-2">
+    <strong>Username:</strong> {{ profile.user.username }}
+  </div>
+  <div class="form-group mb-2">
+    <strong>Firstname:</strong> {{ profile.user.first_name }}
+  </div>
+  <div class="form-group mb-2">
+    <strong>Lastname:</strong> {{ profile.user.last_name }}
+  </div>
+  <div class="form-group mb-2">
+    <strong>Email:</strong> {{ profile.user.email }}
+  </div>
+  <div class="form-group mb-2">
+    <strong>Point:</strong> {{ profile.point }}
+  </div>
+  <div class="form-group mb-3">
+    <strong>Type:</strong> {{ profile.usertype }}
+  </div>
+
+  <!-- Optional: link to an edit page if you add it later -->
+  <p><a href="{% url 'editprofile-page' %}" class="btn btn-secondary">Edit Profile</a></p>
+
+{% endblock content %}

@@ -1,0 +1,47 @@
+{% extends 'myapp/base.html' %}
+
+{% block myheader %}
+  <h1>Add Product</h1>
+{% endblock myheader %}
+
+{% block content %}
+<form method="POST" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  <div class="mb-3">
+    <label class="form-label">Title</label>
+    <input type="text" name="title" class="form-control" required>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Description</label>
+    <textarea name="description" class="form-control" rows="3"></textarea>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Price</label>
+    <input type="number" step="0.01" name="price" class="form-control">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Quantity</label>
+    <input type="number" name="quantity" class="form-control">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Picture (image)</label>
+    <input type="file" name="picture" accept="image/*" class="form-control">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Spec file (pdf/doc/…)</label>
+    <input type="file" name="specfile" class="form-control">
+  </div>
+
+  <button type="submit" class="btn btn-primary">Save</button>
+
+  {% if message %}
+    <div class="alert alert-info mt-3">{{ message }}</div>
+  {% endif %}
+</form>
+{% endblock content %}

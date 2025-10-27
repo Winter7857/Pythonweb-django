@@ -1,0 +1,9 @@
+.\venv\Scripts\activate(venv)
+python manage.py runserver(run)
+admin:Potae 
+Password:2546
+Gmail:Potae@gmail.com
+
+python manage.py makemigrations
+warun
+asdf2546

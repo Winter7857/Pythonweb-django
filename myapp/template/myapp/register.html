@@ -1,0 +1,35 @@
+{% extends 'myapp/base.html' %}
+
+{% block myheader %}
+<h2>Create New Account</h2>
+{% endblock myheader %}
+
+{% block content %}
+<form method="POST">
+  {% csrf_token %}
+  <div class="mb-3">
+    <label>Username:</label>
+    <input type="text" name="username" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label>Password:</label>
+    <input type="password" name="password" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label>First name:</label>
+    <input type="text" name="first_name" class="form-control">
+  </div>
+  <div class="mb-3">
+    <label>Last name:</label>
+    <input type="text" name="last_name" class="form-control">
+  </div>
+  <div class="mb-3">
+    <label>Email:</label>
+    <input type="email" name="email" class="form-control">
+  </div>
+  <button type="submit" class="btn btn-primary">Register</button>
+</form>
+{% if message %}
+  <div class="alert alert-info mt-2">{{ message }}</div>
+{% endif %}
+{% endblock content %}

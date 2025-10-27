@@ -1,0 +1,6 @@
+{% extends 'myapp/base.html' %}
+{% block myheader %}<h1>Page not found</h1>{% endblock myheader %}
+{% block content %}
+  <p>Sorry, the page you’re looking for doesn’t exist.</p>
+  <a class="btn btn-primary" href="{% url 'home-page' %}">Back to Home</a>
+{% endblock content %}

@@ -1,0 +1,38 @@
+
+{% extends 'myapp/base.html' %}
+{% load static %}
+
+{% block myheader %}
+<center><h2>All Contacts</h2></center>
+{% endblock myheader %}
+
+{% block content %}
+<table class="table table-success table-striped">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Topic</th>
+      <th>Email</th>
+      <th>Detail</th>
+      <th>Complete</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for data in contact %}
+    <tr>
+      <th scope="row">{{ forloop.counter }}</th>
+      <td>
+        <a href="{% url 'action-page' data.id %}">{{ data.topic }}</a>
+      </td>
+      <td>{{ data.email }}</td>
+      <td>{{ data.detail }}</td>
+      <td>{% if data.complete %}Yes{% else %}No{% endif %}</td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="5" class="text-center">No contacts found</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock content %}
