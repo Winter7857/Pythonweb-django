@@ -52,6 +52,14 @@ urlpatterns = [
     # --- Product upload/download ---
     path('addproduct/', addproduct, name='addproduct-page'),
     path('action/<int:cid>/', actionPage, name='action-page'),  
+    # --- Product management (admin) ---
+    path('products/', editproduct_list, name='editproduct-list'),
+    path('products/<int:pid>/edit/', editproduct, name='editproduct'),
+    # --- Product delete (admin) ---
+    path('products/delete/', deleteproduct_list, name='deleteproduct-list'),
+    path('products/<int:pid>/delete/', deleteproduct, name='deleteproduct'),
+    # --- Cart (user) ---
+    path('cart/', cart_page, name='cart-page'),
     
 ]
 if settings.DEBUG:

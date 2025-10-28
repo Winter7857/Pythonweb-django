@@ -28,7 +28,7 @@ from .models import Product
 
 def home(request):
     product_list = Product.objects.all().order_by('-id')
-    paginator = Paginator(product_list, 3)  # 3 products per page
+    paginator = Paginator(product_list, 4)  # 4 products per page
 
     page = request.GET.get('page', 1)
     try:
@@ -208,6 +208,10 @@ def editProfile(request):
 
     return render(request, "myapp/editprofile.html", context)
 def addproduct(request):
+    # Render empty form on GET
+    if request.method != 'POST':
+        return render(request, 'myapp/addproduct.html')
+
     if request.method == 'POST':
         data = request.POST.copy()
         title = data.get('title')
@@ -249,7 +253,65 @@ def addproduct(request):
         new.save()
         return render(request, 'myapp/addproduct.html', {'message': '✅ Product added successfully!'})
 
-    return render(request, 'myapp/addproduct.html')
+@login_required
+@user_passes_test(is_admin)
+def editproduct_list(request):
+    products = Product.objects.all().order_by('-id')
+    return render(request, 'myapp/editproduct_list.html', {'products': products})
+
+@login_required
+@user_passes_test(is_admin)
+def editproduct(request, pid):
+    product = get_object_or_404(Product, id=pid)
+    message = None
+
+    if request.method == 'POST':
+        data = request.POST.copy()
+        product.title = data.get('title', product.title)
+        product.description = data.get('description', product.description)
+        product.price = data.get('price') or product.price
+        product.quantity = data.get('quantity') or product.quantity
+        product.instock = bool(data.get('instock'))
+
+        # Optional file replacements
+        if 'picture' in request.FILES:
+            file_image = request.FILES['picture']
+            try:
+                product.picture.save(file_image.name.replace(' ', '_'), file_image, save=False)
+            except Exception:
+                pass
+
+        if 'specfile' in request.FILES:
+            file_spec = request.FILES['specfile']
+            try:
+                product.specfile.save(file_spec.name.replace(' ', '_'), file_spec, save=False)
+            except Exception:
+                pass
+
+        product.save()
+        message = '✅ Product updated successfully.'
+
+    return render(request, 'myapp/editproduct_form.html', {'p': product, 'message': message})
+
+@login_required
+@user_passes_test(is_admin)
+def deleteproduct_list(request):
+    products = Product.objects.all().order_by('-id')
+    return render(request, 'myapp/deleteproduct_list.html', {'products': products})
+
+@login_required
+@user_passes_test(is_admin)
+def deleteproduct(request, pid):
+    product = get_object_or_404(Product, id=pid)
+    if request.method == 'POST':
+        product.delete()
+        return redirect('deleteproduct-list')
+    return render(request, 'myapp/deleteproduct_confirm.html', {'p': product})
+
+@login_required
+def cart_page(request):
+    # Placeholder cart page for authenticated users
+    return render(request, 'myapp/cart.html', {})
 
 
 def handler404(request, exception=None):
@@ -316,6 +378,7 @@ def actionPage(request, cid):
             return redirect('showcontact-page')
 
     return render(request, 'myapp/action.html', context)
+
 
 
 
