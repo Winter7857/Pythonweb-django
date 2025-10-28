@@ -34,3 +34,4 @@ media/
 .vscode/
 *.swp
 Thumbs.db
+.text.text
