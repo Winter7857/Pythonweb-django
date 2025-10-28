@@ -32,16 +32,16 @@
 
   <div class="row justify-content-center">
     {% for data in pd %}
-      <div class="col-12 col-md-5 col-lg-4 mb-4">
-        <div class="card h-100 shadow-sm">
+      <div class="col-12 col-md-6 col-lg-6 mb-5">
+        <div class="card h-100 shadow-sm product-card">
           {% if data.picture %}
             <img src="{{ data.picture.url }}" alt="{{ data.title }}"
-                 class="card-img-top" style="max-height:260px; object-fit:cover;">
+                 class="card-img-top" style="max-height:360px; object-fit:cover;">
           {% endif %}
           <div class="card-body text-center">
-            <h5 class="card-title fw-bold">{{ data.title }}</h5>
+            <h5 class="card-title fw-bold product-title">{{ data.title }}</h5>
             <p class="text-muted small mb-1">{{ data.description }}</p>
-            <p class="mb-1">💰 <strong>{{ data.price|default:"0"|floatformat:2 }}</strong> THB</p>
+            <p class="mb-1 product-price">💰 <strong>{{ data.price|default:"0"|floatformat:2 }}</strong> THB</p>
             <p class="mb-1">📦 Stock: {{ data.quantity|default:0 }}</p>
 
             {% if data.specfile %}

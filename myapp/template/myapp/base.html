@@ -1,39 +1,84 @@
 {% load static %}
 
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="auto">
+<html lang="en" data-bs-theme="dark">
   <head>
-    <nav class="d-flex mt-2 mt-md-0">    
-  <a class="me-3 py-2 text-dark text-decoration-none" href="#">PlayStation5</a>
-  <a class="me-3 py-2 text-dark text-decoration-none" href="#">PlayStation4</a>
-  <a class="me-3 py-2 text-dark text-decoration-none" href="#">Nintendo Switch</a>
-
-  <!-- Right-aligned buttons -->
-  <div class="ms-auto">
-    {% if user.is_authenticated and user.profile.usertype|lower == 'admin' %}
-  <a class="me-3 py-2 text-dark text-decoration-none" href="{% url 'showcontact-page' %}">Show contact</a>
-   <a class="me-3 py-2 text-dark text-decoration-none" href="{% url 'addproduct-page' %}">add product</a>
-{% endif %} 
-
-    {% if user.is_authenticated %}
-      <a class="py-2 text-dark text-decoration-none" href="{% url 'profile-page' %}">
-    Hello, {% firstof user.first_name user.username %}  [{{ user.profile.usertype|lower }}]
-  </a>
-    <!-- {% firstof user.first_name user.username %} [{{ user.profile }}] -->
-  </span>
-      <!-- <span class="py-2 me-3 text-dark">{{ user.profile }}</span>  -->
-      <a class="btn btn-outline-danger btn-sm" href="{% url 'logout' %}">Log out</a>
-    {% else %}
-      <a class="btn btn-outline-primary btn-sm" href="{% url 'login' %}">Log in</a>
-    {% endif %}
-  </div>
-</nav>
-
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="" />
     <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors" />
     <meta name="generator" content="Astro v5.9.2" />
+
+    <script>
+      (() => {
+        'use strict';
+
+        const getStoredTheme = () => localStorage.getItem('theme');
+        const setStoredTheme = (theme) => localStorage.setItem('theme', theme);
+
+        const getPreferredTheme = () => {
+          const storedTheme = getStoredTheme();
+          if (storedTheme) return storedTheme;
+          return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        };
+
+        const setTheme = (theme) => {
+          if (theme === 'auto') {
+            document.documentElement.setAttribute(
+              'data-bs-theme',
+              window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+            );
+          } else {
+            document.documentElement.setAttribute('data-bs-theme', theme);
+          }
+        };
+
+        // Set initial theme ASAP to avoid flash
+        setTheme(getPreferredTheme());
+
+        // Update on OS theme change when in auto mode
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+          const storedTheme = getStoredTheme();
+          if (storedTheme !== 'light' && storedTheme !== 'dark') {
+            setTheme(getPreferredTheme());
+          }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+          const activeUse = document.querySelector('.theme-icon-active use');
+          const themeSwitcher = document.querySelector('#bd-theme');
+
+          const showActiveTheme = (theme, focus = false) => {
+            const btnToActivate = document.querySelector(`[data-bs-theme-value="${theme}"]`);
+            if (!btnToActivate) return;
+
+            document.querySelectorAll('[data-bs-theme-value]').forEach((el) => el.classList.remove('active'));
+            btnToActivate.classList.add('active');
+
+            const svgUse = btnToActivate.querySelector('svg use');
+            if (svgUse && activeUse) {
+              activeUse.setAttribute('href', svgUse.getAttribute('href'));
+            }
+
+            if (themeSwitcher) themeSwitcher.setAttribute('aria-label', `Toggle theme (${theme})`);
+            if (focus && themeSwitcher) themeSwitcher.focus();
+          };
+
+          // Initialize active state
+          showActiveTheme(localStorage.getItem('theme') || 'auto');
+
+          // Hook up buttons
+          document.querySelectorAll('[data-bs-theme-value]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              const theme = btn.getAttribute('data-bs-theme-value');
+              setStoredTheme(theme);
+              setTheme(theme);
+              showActiveTheme(theme, true);
+            });
+          });
+        });
+      })();
+    </script>
 
     <title>Pricing Example · Bootstrap v5.3</title>
     <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/pricing/" />
@@ -53,8 +98,8 @@
     <link rel="icon" href="assets/img/favicon.ico" />
     <meta name="theme-color" content="#712cf9" />
 
-    <!-- Custom CSS -->
-    <link href="pricing.css" rel="stylesheet" />
+    <!-- App CSS -->
+    <link rel="stylesheet" href="{% static 'css/myCss.css' %}">
 
     <style>
       .bd-placeholder-img {
@@ -130,77 +175,44 @@
     </style>
   </head>
   
-  <body>
-    <!-- Theme toggle -->
-    <div class="dropdown position-fixed bottom-0 end-0 mb-3 me-3 bd-mode-toggle">
-      <button
-        class="btn btn-bd-primary py-2 dropdown-toggle d-flex align-items-center"
-        id="bd-theme"
-        type="button"
-        aria-expanded="false"
-        data-bs-toggle="dropdown"
-        aria-label="Toggle theme (auto)"
-      >
-        <svg class="bi my-1 theme-icon-active" aria-hidden="true">
-          <use href="#circle-half"></use>
-        </svg>
-        <span class="visually-hidden" id="bd-theme-text">Toggle theme</span>
-      </button>
-      <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="bd-theme-text">
-        <li>
-          <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="light">
-            <svg class="bi me-2 opacity-50" aria-hidden="true">
-              <use href="#sun-fill"></use>
-            </svg>
-            Light
-            <svg class="bi ms-auto d-none" aria-hidden="true"><use href="#check2"></use></svg>
-          </button>
-        </li>
-        <li>
-          <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="dark">
-            <svg class="bi me-2 opacity-50" aria-hidden="true">
-              <use href="#moon-stars-fill"></use>
-            </svg>
-            Dark
-            <svg class="bi ms-auto d-none" aria-hidden="true"><use href="#check2"></use></svg>
-          </button>
-        </li>
-        <li>
-          <button type="button" class="dropdown-item d-flex align-items-center active" data-bs-theme-value="auto">
-            <svg class="bi me-2 opacity-50" aria-hidden="true">
-              <use href="#circle-half"></use>
-            </svg>
-            Auto
-            <svg class="bi ms-auto d-none" aria-hidden="true"><use href="#check2"></use></svg>
-          </button>
-        </li>
-      </ul>
-    </div>
+  <body class="bg-gamestore">
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-dark navbar-expand bg-gs-dark shadow-sm">
+      <div class="container-fluid">
+        <span class="navbar-brand fw-semibold">🎮 GAME STORE{% if user.is_authenticated and user.profile.usertype|lower == 'admin' %} Admin{% endif %}</span>
+        <div class="ms-auto d-flex align-items-center gap-2">
+          {% if user.is_authenticated and user.profile.usertype|lower == 'admin' %}
+            <a href="{% url 'addproduct-page' %}" class="btn btn-add btn-sm">+ Add</a>
+            <a href="#" class="btn btn-edit btn-sm">✏️ Edit</a>
+            <a href="#" class="btn btn-delete btn-sm">🗑️ Delete</a>
+          {% endif %}
+          {% if user.is_authenticated %}
+            <a class="btn btn-outline-light btn-sm" href="{% url 'logout' %}">Logout</a>
+          {% else %}
+            <a class="btn btn-outline-light btn-sm" href="{% url 'login' %}">Login</a>
+          {% endif %}
+        </div>
+      </div>
+    </nav>
 
     <!-- Page Container -->
     <div class="container py-3">
       <!-- Header -->
       
-        {% block myheader %}
-      
-        {% endblock myheader %}
-      
-<img src="{% static 'image/logo.jpg' %}" alt="logo image" width="40" height="32">
-<span class="fs-4">My Django Application</span>
+        {% block myheader %}{% endblock myheader %}
 
       <!-- Main Content -->
         {% block content %}
         
         {% endblock content %}
       <!-- Footer -->
-      <footer class="pt-4 my-md-5 pt-md-5 border-top">
+      <footer class="pt-5 border-top-0">
         <div class="row">
           <div class="col-12 col-md">
-            <img class="mb-2" src="assets/brand/bootstrap-logo.svg" alt="" width="24" height="19" />
-            <small class="d-block mb-3 text-body-secondary">&copy; 2017–2025</small>
+            <small class="d-block mb-3 text-secondary">&copy; 2025 GAME STORE</small>
           </div>
           <div class="col-6 col-md">
-            <h5>Features</h5>
+            <h5 class="text-light">Features</h5>
             <ul class="list-unstyled text-small">
               <li class="mb-1"><a class="link-secondary text-decoration-none" href="#">Cool stuff</a></li>
               <li class="mb-1"><a class="link-secondary text-decoration-none" href="#">Random feature</a></li>
@@ -211,7 +223,7 @@
             </ul>
           </div>
           <div class="col-6 col-md">
-            <h5>Resources</h5>
+            <h5 class="text-light">Resources</h5>
             <ul class="list-unstyled text-small">
               <li class="mb-1"><a class="link-secondary text-decoration-none" href="#">Resource</a></li>
               <li class="mb-1"><a class="link-secondary text-decoration-none" href="#">Resource name</a></li>
@@ -220,7 +232,7 @@
             </ul>
           </div>
           <div class="col-6 col-md">
-            <h5>About</h5>
+            <h5 class="text-light">About</h5>
             <ul class="list-unstyled text-small">
               <li class="mb-1"><a class="link-secondary text-decoration-none" href="{% url 'about-page' %}">About us</a></li>
               <li class="mb-1">
