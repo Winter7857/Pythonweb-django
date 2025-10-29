@@ -1,29 +1,100 @@
 {% extends 'myapp/base.html' %}
+{% load static %}
 
-{% block myheader %}
-<h1>Log in</h1>
-{% endblock myheader %}
+{% block myheader %}{% endblock myheader %}
+{% block masthead %}{% endblock masthead %}
 
 {% block content %}
-    {% if message %}
-        <h3>{{ message }}</h3>
-    {% else %}
-        <form method="POST" action="">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="username">User:</label>
-                <input type="text" class="form-control" id="username" name="username" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Pass:</label>
-                <input type="password" class="form-control" id="password" name="password" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Log in</button>
-        </form>
-        <p class="mt-3">
-  Don’t have an account?
-  <a href="{% url 'register' %}">Create New Account</a>
-</p>
+  <style>
+    /* Gray background theme */
+    .auth-bg {
+      position: relative;
+      min-height: 100vh;
+      overflow: hidden;
+      padding-top: 3rem;
+      padding-bottom: 3rem;
+      /* Full-bleed background even inside base .container */
+      width: 100vw;
+      left: 50%;
+      right: 50%;
+      margin-left: -50vw;
+      margin-right: -50vw;
+      background: #F3F4F6; /* light gray */
+    }
+    .auth-content { position: relative; }
+    .auth-card {
+      background: #FFFFFF;
+      border: 1px solid rgba(0,0,0,.06);
+      box-shadow: 0 10px 24px rgba(0,0,0,.06);
+      color: var(--text);
+    }
+    /* Purple accent focus to match Sign in button */
+    .auth-card .form-control:focus,
+    .auth-card .form-select:focus {
+      border-color: #7C3AED !important;
+      box-shadow: 0 0 0 .25rem rgba(124, 58, 237, .35) !important;
+    }
+    .auth-card .btn-primary {
+      background-color: #7C3AED !important; /* purple */
+      border-color: #7C3AED !important;
+      color: #FFFFFF;
+      box-shadow: 0 6px 16px rgba(124,58,237,.35);
+    }
+    .auth-card .btn-primary:hover { background-color: #6D28D9 !important; border-color: #6D28D9 !important; }
+    /* Mobile adjustments */
+    @media (max-width: 576px) {
+      .auth-bg { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+      .auth-card .card-body { padding: 1.25rem; }
+      h1.h4 { font-size: 1.125rem; }
+    }
+  </style>
+  <section class="auth-bg">
+    <div class="container d-flex flex-column align-items-center justify-content-center auth-content" style="min-height: 60vh;">
+      <a href="{% url 'home-page' %}" class="d-flex align-items-center mb-4 text-decoration-none" aria-label="Home">
+        <span class="fw-bold" style="color: var(--text); font-size: 1.5rem;">Gaming Shop</span>
+      </a>
 
-    {% endif %}
+      <div class="w-100" style="max-width: 480px;">
+        <div class="card shadow-sm border-0 auth-card">
+          <div class="card-body p-4 p-md-5">
+            <h1 class="h4 fw-bold mb-4" style="color: var(--text);">Sign in to your account</h1>
+
+            {% if message %}
+              <div class="alert alert-danger" role="alert">{{ message }}</div>
+            {% endif %}
+
+            <form method="POST" action="" class="gy-3">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" id="username" name="username" placeholder="Your username" required>
+              </div>
+
+              <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
+              </div>
+
+              <div class="d-flex justify-content-start align-items-center gap-3 mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" value="1" id="remember">
+                  <label class="form-check-label" for="remember">
+                    Remember me
+                  </label>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary w-100">Sign in</button>
+
+              <p class="text-muted mt-3 mb-0">
+                Don’t have an account?
+                <a href="{% url 'register' %}" class="text-decoration-none" style="color: var(--accent);">Create New Account</a>
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 {% endblock content %}
+{% block footer %}{% endblock footer %}
