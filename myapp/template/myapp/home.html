@@ -28,17 +28,45 @@
 {% block content %}
 <div class="container py-4">
   <h2 class="text-center mb-3">Welcome to My Django App</h2>
-  <p class="text-center text-muted">This is the home page of my Django application.</p>
+  
+  <form method="get" class="row g-2 align-items-end mb-4" role="search">
+    <div class="col-12 col-md-6">
+      <label for="q" class="form-label">Search games</label>
+      <input type="search" id="q" name="q" class="form-control" placeholder="Search by title or description" value="{{ q|default:'' }}">
+    </div>
+    <div class="col-12 col-md-4">
+      <label for="genre" class="form-label">Genre</label>
+      <select id="genre" name="genre" class="form-select">
+        <option value="">All</option>
+        {% for g in all_genres %}
+          <option value="{{ g }}" {% if selected_genre == g %}selected{% endif %}>{{ g|upper }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-2 d-grid">
+      <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+  </form>
 
   <div class="row justify-content-center">
     {% for data in pd %}
       <div class="col-12 col-md-6 col-lg-6 mb-4">
         <div class="card h-100 shadow-sm product-card">
           {% if data.picture %}
-            <img src="{{ data.picture.url }}" alt="{{ data.title }}" class="card-img-top product-img">
+            <div class="product-media">
+              <img src="{{ data.picture.url }}" alt="{{ data.title }}" class="card-img-top product-img js-view-full" data-full-src="{{ data.picture.url }}" role="button" tabindex="0">
+              <div class="view-overlay js-view-full" data-full-src="{{ data.picture.url }}" aria-label="View full image" role="button" tabindex="0">
+                <span class="view-badge">🔍 View</span>
+              </div>
+            </div>
+          {% else %}
+            <div class="card-img-top product-img d-flex align-items-center justify-content-center text-muted" style="font-size: 0.9rem;">No image</div>
           {% endif %}
           <div class="card-body text-center">
             <h5 class="card-title fw-bold product-title">{{ data.title }}</h5>
+            {% if data.genre %}
+              <span class="badge rounded-pill text-bg-secondary mb-2">{{ data.genre|upper }}</span>
+            {% endif %}
             <p class="text-muted small mb-1">{{ data.description }}</p>
             <p class="mb-1 product-price">💰 <strong>{{ data.price|default:"0"|floatformat:2 }}</strong> THB</p>
             <p class="mb-1">📦 Stock: {{ data.quantity|default:0 }}</p>
@@ -104,19 +132,50 @@
 
 <style>
   .toast-host { position: fixed; right: 16px; bottom: 16px; z-index: 1080; }
-  .toast-card { background: #1e293b; color: #fff; border-radius: .5rem; padding: .6rem .9rem; min-width: 240px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
-  .toast-card + .toast-card { margin-top: .5rem; }
+  .toast-card { background: var(--bg-elev); color: var(--text); border: 1px solid var(--border); border-radius: .5rem; padding: .6rem .9rem; min-width: 240px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+  .toast-card + .toast-card { background: var(--bg-elev); color: var(--text); border: 1px solid var(--border); border-radius: .5rem; padding: .6rem .9rem; min-width: 240px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
   .btn.add-to-cart-btn { min-width: 160px; }
-  .product-img { object-fit: cover; max-height: 320px; }
+  .product-media { position: relative; }
+  .product-img { width: 100%; aspect-ratio: 16/9; height: auto; object-fit: cover; background: var(--bg-elev); display: block; cursor: zoom-in; }
+  .view-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .18s ease-in-out; background: rgba(0,0,0,.25); z-index: 2; }
+  .view-badge { background: rgba(0,0,0,.55); color: #fff; padding: .25rem .6rem; border-radius: 9999px; font-weight: 600; font-size: .9rem; }
+  .product-media:hover .view-overlay, .product-media:focus-within .view-overlay { opacity: 1; }
   .product-card { border-radius: .75rem; }
   .product-title { min-height: 2.4em; }
+    /* Product card text follows theme text color */
+  .product-card, .product-card .card-title, .product-card .product-price, .product-card p,
+  .product-card .text-muted, .product-card small, .product-card a, .product-card strong {
+    color: var(--text) !important;
+  }
 </style>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="background: transparent; border: 0;">
+      <button type="button" class="btn-close ms-auto me-2 mt-2" data-bs-dismiss="modal" aria-label="Close"></button>
+      <img id="imageModalImg" src="" alt="" class="img-fluid rounded shadow" style="display:block;">
+    </div>
+  </div>
+  
+</div>
 
 <div id="toast-root" class="toast-host"></div>
 
 <script>
   (function () {
     const toastRoot = document.getElementById('toast-root');
+    const imageModalEl = document.getElementById('imageModal');
+    const imageModalImg = document.getElementById('imageModalImg');
+    let imageModal;
+    function getImageModal() {
+      if (!imageModalEl) return null;
+      // Create lazily so Bootstrap can load first
+      if (!imageModal && window.bootstrap && typeof window.bootstrap.Modal === 'function') {
+        imageModal = new window.bootstrap.Modal(imageModalEl);
+      }
+      return imageModal || null;
+    }
     function showToast(message, opts) {
       const duration = (opts && opts.duration) || 1800;
       const icon = (opts && opts.icon) || '';
@@ -181,9 +240,44 @@
         e.preventDefault();
         onAddClick(target);
       }
+      const imgEl = e.target.closest('.js-view-full');
+      if (imgEl && imageModalImg) {
+        e.preventDefault();
+        const full = imgEl.getAttribute('data-full-src') || imgEl.getAttribute('src');
+        imageModalImg.src = full || '';
+        imageModalImg.alt = imgEl.getAttribute('alt') || 'Product image';
+        const modal = getImageModal();
+        if (modal) {
+          modal.show();
+        } else if (full) {
+          // Fallback: open in new tab if Bootstrap not loaded yet
+          window.open(full, '_blank');
+        }
+      }
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if ((e.key === 'Enter' || e.key === ' ') && document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('js-view-full')) {
+        e.preventDefault();
+        const imgEl = document.activeElement;
+        if (imageModalImg) {
+          const full = imgEl.getAttribute('data-full-src') || imgEl.getAttribute('src');
+          imageModalImg.src = full || '';
+          imageModalImg.alt = imgEl.getAttribute('alt') || 'Product image';
+          const modal = getImageModal();
+          if (modal) {
+            modal.show();
+          } else if (full) {
+            window.open(full, '_blank');
+          }
+        }
+      }
     });
   })();
 </script>
 
 <script src="{% static 'js/myJS.js' %}"></script>
 {% endblock content %}
+
+
+

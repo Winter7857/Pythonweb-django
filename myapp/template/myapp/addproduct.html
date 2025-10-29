@@ -29,8 +29,27 @@
   </div>
 
   <div class="mb-3">
+    <label class="form-label">Genre</label>
+    <select name="genre" class="form-select">
+      <option value="">-- Select genre --</option>
+      <option value="fps">FPS</option>
+      <option value="mmorpg">MMORPG</option>
+      <option value="rpg">RPG</option>
+      <option value="action">Action</option>
+      <option value="adventure">Adventure</option>
+      <option value="horror">Horror</option>
+      <option value="sport">Sport</option>
+      <option value="strategy">Strategy</option>
+      <option value="sim">Simulation</option>
+      <option value="other">Other</option>
+    </select>
+  </div>
+
+  <div class="mb-3">
     <label class="form-label">Picture (image)</label>
-    <input type="file" name="picture" accept="image/*" class="form-control">
+    <input type="file" name="picture" accept="image/*" class="form-control mb-2">
+    <div class="form-text">Or provide an image URL below (one or the other):</div>
+    <input type="url" name="image_url" placeholder="https://example.com/image.jpg" class="form-control" />
   </div>
 
   <div class="mb-3">

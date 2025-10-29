@@ -11,9 +11,12 @@ from django.contrib.auth.models import User
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth import authenticate, login
 from django.core.files.storage import FileSystemStorage
+from django.core.files.base import ContentFile
 from .models import Contact, Action
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Q
+from django.views.decorators.csrf import csrf_protect
+from django.contrib import messages
 
 
 
@@ -31,6 +34,14 @@ from .models import Product
 
 def home(request):
     product_list = Product.objects.all().order_by('-id')
+
+    # Filters
+    q = (request.GET.get('q') or '').strip()
+    genre = (request.GET.get('genre') or '').strip().lower()
+    if q:
+        product_list = product_list.filter(Q(title__icontains=q) | Q(description__icontains=q))
+    if genre:
+        product_list = product_list.filter(genre__iexact=genre)
     paginator = Paginator(product_list, 4)  # 4 products per page
 
     page = request.GET.get('page', 1)
@@ -41,9 +52,18 @@ def home(request):
     except EmptyPage:
         page_obj = paginator.page(paginator.num_pages)
 
+    # Build genre options from DB (distinct non-empty)
+    try:
+        all_genres = list(Product.objects.exclude(genre__isnull=True).exclude(genre__exact='').values_list('genre', flat=True).distinct())
+    except Exception:
+        all_genres = []
+
     return render(request, 'myapp/home.html', {
         'pd': page_obj.object_list,
         'page_obj': page_obj,
+        'q': q,
+        'selected_genre': genre,
+        'all_genres': all_genres,
     })
 
     
@@ -222,6 +242,7 @@ def addproduct(request):
         price = data.get('price')
         quantity = data.get('quantity')
         instock = data.get('instock')
+        genre = (data.get('genre') or '').strip().lower() or None
 
         # Create product instance (without saving yet)
         new = Product(
@@ -229,11 +250,13 @@ def addproduct(request):
             description=description,
             price=price,
             quantity=quantity,
-            instock=bool(instock)
+            instock=bool(instock),
+            genre=genre
         )
 
-        # === IMAGE UPLOAD ===
-        if 'picture' in request.FILES:
+        # === IMAGE UPLOAD or URL ===
+        image_url = (data.get('image_url') or '').strip()
+        if 'picture' in request.FILES and request.FILES['picture']:
             file_image = request.FILES['picture']
             file_image_name = file_image.name.replace(' ', '_')
             fs = FileSystemStorage(location='media/product/')
@@ -241,6 +264,26 @@ def addproduct(request):
             upload_file_url = fs.url(filename)
             print("Picture URL:", upload_file_url)
             new.picture = 'product/' + upload_file_url[6:]
+        elif image_url:
+            try:
+                import urllib.request, os
+                resp = urllib.request.urlopen(image_url, timeout=10)
+                data_bytes = resp.read()
+                content_type = resp.headers.get('Content-Type', '')
+                ext = 'jpg'
+                if 'png' in content_type:
+                    ext = 'png'
+                elif 'gif' in content_type:
+                    ext = 'gif'
+                elif 'jpeg' in content_type:
+                    ext = 'jpg'
+                base = os.path.basename(urllib.request.urlparse(image_url).path) or f'image.{ext}'
+                if '.' not in base:
+                    base = f'{base}.{ext}'
+                safe_name = base.replace(' ', '_')
+                new.picture.save(safe_name, ContentFile(data_bytes), save=False)
+            except Exception as e:
+                print('Image URL download failed:', e)
 
         # === SPEC FILE UPLOAD ===
         if 'specfile' in request.FILES:
@@ -275,12 +318,36 @@ def editproduct(request, pid):
         product.price = data.get('price') or product.price
         product.quantity = data.get('quantity') or product.quantity
         product.instock = bool(data.get('instock'))
+        g = (data.get('genre') or '').strip().lower()
+        product.genre = g or None
 
         # Optional file replacements
-        if 'picture' in request.FILES:
+        image_url = (data.get('image_url') or '').strip()
+        if 'picture' in request.FILES and request.FILES['picture']:
             file_image = request.FILES['picture']
             try:
                 product.picture.save(file_image.name.replace(' ', '_'), file_image, save=False)
+            except Exception:
+                pass
+        elif image_url:
+            try:
+                import urllib.request, urllib.parse, os
+                resp = urllib.request.urlopen(image_url, timeout=10)
+                data_bytes = resp.read()
+                content_type = resp.headers.get('Content-Type', '')
+                ext = 'jpg'
+                if 'png' in content_type:
+                    ext = 'png'
+                elif 'gif' in content_type:
+                    ext = 'gif'
+                elif 'jpeg' in content_type:
+                    ext = 'jpg'
+                path = urllib.parse.urlparse(image_url).path
+                base = os.path.basename(path) or f'image.{ext}'
+                if '.' not in base:
+                    base = f'{base}.{ext}'
+                safe_name = base.replace(' ', '_')
+                product.picture.save(safe_name, ContentFile(data_bytes), save=False)
             except Exception:
                 pass
 
@@ -428,6 +495,36 @@ def cart_api_checkout(request):
         "processed": processed,
         "out_of_stock": out_of_stock,
     })
+
+
+# -------- Admin: Manage user roles --------
+@login_required
+@user_passes_test(is_admin)
+@csrf_protect
+def user_roles(request):
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        new_role = (request.POST.get('usertype') or '').strip().lower()
+        allowed = {'member', 'vip', 'vvip'}
+        try:
+            target = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return redirect('user-roles')
+
+        if new_role not in allowed:
+            messages.error(request, 'Invalid role selected.')
+            return redirect('user-roles')
+
+        # Ensure profile exists
+        prof, _ = Profile.objects.get_or_create(user=target)
+        prof.usertype = new_role
+        prof.save(update_fields=['usertype'])
+        messages.success(request, f"Updated {target.username}'s role to {new_role.upper()}.")
+        return redirect('user-roles')
+
+    # GET: list users with profiles
+    users = User.objects.all().select_related('profile').order_by('username')
+    return render(request, 'myapp/user_roles.html', { 'users': users })
 
 
 def handler404(request, exception=None):

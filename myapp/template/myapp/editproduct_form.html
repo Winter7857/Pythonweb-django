@@ -35,12 +35,31 @@
     </div>
 
     <div class="col-md-6">
+      <label class="form-label">Genre</label>
+      <select name="genre" class="form-select">
+        <option value="" {% if not p.genre %}selected{% endif %}>-- Select genre --</option>
+        <option value="fps" {% if p.genre == 'fps' %}selected{% endif %}>FPS</option>
+        <option value="mmorpg" {% if p.genre == 'mmorpg' %}selected{% endif %}>MMORPG</option>
+        <option value="rpg" {% if p.genre == 'rpg' %}selected{% endif %}>RPG</option>
+        <option value="action" {% if p.genre == 'action' %}selected{% endif %}>Action</option>
+        <option value="adventure" {% if p.genre == 'adventure' %}selected{% endif %}>Adventure</option>
+        <option value="horror" {% if p.genre == 'horror' %}selected{% endif %}>Horror</option>
+        <option value="sport" {% if p.genre == 'sport' %}selected{% endif %}>Sport</option>
+        <option value="strategy" {% if p.genre == 'strategy' %}selected{% endif %}>Strategy</option>
+        <option value="sim" {% if p.genre == 'sim' %}selected{% endif %}>Simulation</option>
+        <option value="other" {% if p.genre == 'other' %}selected{% endif %}>Other</option>
+      </select>
+    </div>
+
+    <div class="col-md-6">
       <label class="form-label">Picture (image)</label>
       {% if p.picture %}
         <div class="mb-2"><img src="{{ p.picture.url }}" alt="{{ p.title }}" style="max-height:120px; border-radius:8px"></div>
       {% endif %}
-      <input type="file" name="picture" accept="image/*" class="form-control">
-      <div class="form-text">Leave blank to keep current picture.</div>
+      <input type="file" name="picture" accept="image/*" class="form-control mb-2">
+      <div class="form-text">Upload a new image or paste a URL below.</div>
+      <input type="url" name="image_url" placeholder="https://example.com/image.jpg" class="form-control" />
+      <div class="form-text">If both are provided, the uploaded file is used.</div>
     </div>
 
     <div class="col-md-6">
@@ -63,4 +82,3 @@
   {% endif %}
 </form>
 {% endblock content %}
-
