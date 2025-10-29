@@ -40,6 +40,16 @@ _csrf_origins = os.getenv("CSRF_TRUSTED_ORIGINS", "").strip()
 if _csrf_origins:
     CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(",") if o.strip()]
 
+# In DEBUG, allow ngrok by default to simplify sharing
+if DEBUG:
+    if '.ngrok-free.app' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS += ['.ngrok-free.app']  # matches any subdomain
+    if 'CSRF_TRUSTED_ORIGINS' in globals():
+        if 'https://*.ngrok-free.app' not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS += ['https://*.ngrok-free.app']
+    else:
+        CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.app']
+
 
 # Application definition
 
@@ -60,6 +70,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'mywebsite.middleware.LoginRequiredMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -144,3 +155,13 @@ LOGOUT_REDIRECT_URL = "login"
 # ALLOWED_HOSTS = ['*']   # or your domain/IP in production
 # # at bottom of the file (global scope)
 handler404 = 'myapp.views.handler404'
+
+# Require login for the whole site except the following paths
+LOGIN_EXEMPT_URLS = (
+    r'^/login/$',
+    r'^/register/$',
+    r'^/static/.*',
+    r'^/media/.*',
+    r'^/admin/login/.*',
+    r'^/admin/.*',
+)
