@@ -1,5 +1,6 @@
 
 from django.http import HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import *
 from .models import *
 from django.shortcuts import render, redirect, get_object_or_404
@@ -11,6 +12,8 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth import authenticate, login
 from django.core.files.storage import FileSystemStorage
 from .models import Contact, Action
+from django.db import transaction
+from django.db.models import F
 
 
 
@@ -310,8 +313,121 @@ def deleteproduct(request, pid):
 
 @login_required
 def cart_page(request):
-    # Placeholder cart page for authenticated users
-    return render(request, 'myapp/cart.html', {})
+    # Cart page with discount context by user role
+    discount_percent = 0
+    role = ''
+    try:
+        if request.user.is_authenticated:
+            role = (getattr(request.user.profile, 'usertype', '') or '').lower()
+            mapping = {'member': 5, 'vip': 10, 'vvip': 15}
+            discount_percent = mapping.get(role, 0)
+    except Exception:
+        pass
+
+    return render(request, 'myapp/cart.html', {
+        'discount_percent': discount_percent,
+        'user_role': role,
+    })
+
+# ---- Cart API (session-based) ----
+from django.views.decorators.http import require_http_methods
+
+SESSION_CART_KEY = 'cart_product_ids'
+
+def _get_session_cart_ids(request):
+    ids = request.session.get(SESSION_CART_KEY) or []
+    # ensure string list
+    return [str(x) for x in ids]
+
+def _set_session_cart_ids(request, ids):
+    request.session[SESSION_CART_KEY] = [str(x) for x in (ids or [])]
+    request.session.modified = True
+
+@login_required
+@require_http_methods(["GET"])
+def cart_api_items(request):
+    ids = _get_session_cart_ids(request)
+    if not ids:
+        return JsonResponse({"items": []})
+    qs = Product.objects.filter(id__in=ids)
+    items = []
+    for p in qs:
+        items.append({
+            "id": str(p.id),
+            "name": p.title,
+            "price": float(p.price or 0),
+            "image": p.picture.url if getattr(p, 'picture', None) and p.picture else "",
+        })
+    # keep original order roughly by ids list
+    items.sort(key=lambda x: ids.index(str(x["id"])) if str(x["id"]) in ids else 0)
+    return JsonResponse({"items": items})
+
+@login_required
+@require_http_methods(["POST"])
+def cart_api_add(request):
+    pid = (request.POST.get('product_id') or '').strip()
+    if not pid:
+        return JsonResponse({"error": "product_id required"}, status=400)
+    # validate product exists
+    if not Product.objects.filter(id=pid).exists():
+        return JsonResponse({"error": "product not found"}, status=404)
+    ids = _get_session_cart_ids(request)
+    if pid not in ids:
+        ids.append(pid)
+        _set_session_cart_ids(request, ids)
+    return JsonResponse({"ok": True, "count": len(ids)})
+
+@login_required
+@require_http_methods(["POST", "DELETE"])
+def cart_api_remove(request):
+    pid = (request.POST.get('product_id') or '').strip()
+    if not pid:
+        return JsonResponse({"error": "product_id required"}, status=400)
+    ids = _get_session_cart_ids(request)
+    if pid in ids:
+        ids = [x for x in ids if x != pid]
+        _set_session_cart_ids(request, ids)
+    return JsonResponse({"ok": True, "count": len(ids)})
+
+@login_required
+@require_http_methods(["POST"])
+def cart_api_clear(request):
+    _set_session_cart_ids(request, [])
+    return JsonResponse({"ok": True, "count": 0})
+
+@login_required
+@require_http_methods(["POST"])
+def cart_api_checkout(request):
+    ids = _get_session_cart_ids(request)
+    if not ids:
+        return JsonResponse({"error": "empty_cart"}, status=400)
+
+    processed = []
+    out_of_stock = []
+
+    with transaction.atomic():
+        for pid in ids:
+            # Decrement quantity atomically only if in stock
+            updated = Product.objects.filter(id=pid, quantity__gt=0).update(quantity=F('quantity') - 1)
+            if updated:
+                p = Product.objects.select_for_update().get(id=pid)
+                # If quantity is None, treat as 0 after decrement protection (shouldn't happen)
+                qty = int(p.quantity or 0)
+                if qty <= 0:
+                    p.instock = False
+                p.save(update_fields=["quantity", "instock"])
+                processed.append(str(pid))
+            else:
+                out_of_stock.append(str(pid))
+
+        # Clear cart after attempt
+        _set_session_cart_ids(request, [])
+
+    return JsonResponse({
+        "ok": True,
+        "processed": processed,
+        "out_of_stock": out_of_stock,
+    })
 
 
 def handler404(request, exception=None):

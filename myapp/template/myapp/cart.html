@@ -5,8 +5,224 @@
 {% endblock myheader %}
 
 {% block content %}
-  <div class="text-center text-muted py-5">
-    <p>Your cart is empty for now.</p>
-  </div>
-{% endblock content %}
+  <div class="container py-4">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 mb-4">
+      <h2 class="mb-0 fw-bold">Your Cart</h2>
+      <a href="{% url 'home-page' %}" class="btn btn-info text-black fw-semibold">Back to Store</a>
+    </div>
 
+    <div id="cart-empty" class="text-center text-muted py-5 d-none">
+      <p>Your cart is empty.</p>
+    </div>
+
+    <div id="cart-list" class="d-flex flex-column gap-3"></div>
+
+    <div id="cart-summary" class="mt-4 d-none">
+      <div class="d-flex flex-column align-items-end">
+        <p class="mb-1">
+          Subtotal: <span id="cart-subtotal" class="fw-semibold">0 ฿</span>
+        </p>
+        <p id="cart-discount-line" class="mb-1 d-none text-success">
+          Discount (<span id="cart-discount-percent">0</span>%): -<span id="cart-discount-amount">0 ฿</span>
+        </p>
+        <p class="fs-4 fw-bold mb-3">
+          Total: <span id="cart-total" class="text-success">0 ฿</span>
+        </p>
+        <button id="checkout-btn" class="btn btn-success fw-semibold">✅ Checkout</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .toast-host { position: fixed; right: 16px; bottom: 16px; z-index: 1080; }
+    .toast-card { background: #1e293b; color: #fff; border-radius: .5rem; padding: .75rem 1rem; min-width: 280px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+    .toast-actions button { min-width: 90px; }
+  </style>
+
+  <div id="toast-root" class="toast-host"></div>
+
+  <script>
+    (function () {
+      const DISCOUNT_PERCENT = Number('{{ discount_percent|default:0 }}') || 0;
+      const cartListEl = document.getElementById('cart-list');
+      const cartEmptyEl = document.getElementById('cart-empty');
+      const cartSummaryEl = document.getElementById('cart-summary');
+      const cartTotalEl = document.getElementById('cart-total');
+      const toastRoot = document.getElementById('toast-root');
+
+      const readCart = () => {
+        try {
+          const raw = localStorage.getItem('cart');
+          return raw ? JSON.parse(raw) : [];
+        } catch (e) { return []; }
+      };
+
+      const saveCart = (items) => {
+        localStorage.setItem('cart', JSON.stringify(items || []));
+      };
+
+      const formatPrice = (val) => {
+        const n = Number(val);
+        return isNaN(n) ? val : n.toLocaleString(undefined, { minimumFractionDigits: 0 }) + ' ฿';
+      };
+
+      // Simple toast confirm matching the intent of your snippet
+      function showConfirmToast(message, onConfirm, options) {
+        const duration = options?.duration ?? 10000;
+        const card = document.createElement('div');
+        card.className = 'toast-card';
+        const id = 't_' + Math.random().toString(36).slice(2);
+        card.setAttribute('data-tid', id);
+        card.innerHTML = `
+          <div class="text-white">
+            <p class="mb-2">${message}</p>
+            <div class="toast-actions d-flex justify-content-end gap-2 mt-2">
+              <button type=\"button\" class=\"btn btn-danger btn-sm\">Confirm</button>
+              <button type=\"button\" class=\"btn btn-secondary btn-sm\">Cancel</button>
+            </div>
+          </div>
+        `;
+        toastRoot.appendChild(card);
+
+        const [confirmBtn, cancelBtn] = card.querySelectorAll('button');
+        const dismiss = () => {
+          card.remove();
+        };
+        confirmBtn.addEventListener('click', () => { try { onConfirm?.(); } finally { dismiss(); } });
+        cancelBtn.addEventListener('click', dismiss);
+        if (duration > 0) setTimeout(dismiss, duration);
+      }
+
+      function showToast(message, opts) {
+        const duration = opts?.duration ?? 2000;
+        const icon = opts?.icon ?? '';
+        const card = document.createElement('div');
+        card.className = 'toast-card mt-2';
+        card.innerHTML = `<div>${icon ? `<span class=\"me-2\">${icon}</span>` : ''}${message}</div>`;
+        toastRoot.appendChild(card);
+        setTimeout(() => card.remove(), duration);
+      }
+
+      function handleRemove(id) {
+        showConfirmToast('Remove this game from your cart?', () => {
+          const current = readCart();
+          const filtered = current.filter((g) => String(g.id) !== String(id));
+          saveCart(filtered);
+          render();
+          showToast('Game removed from cart.', { duration: 2000, icon: '🗑️' });
+        }, { duration: 10000 });
+      }
+
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+      }
+
+      async function handleCheckout() {
+        const items = readCart();
+        if (!items.length) { showToast('Cart is empty.', { duration: 2000 }); return; }
+
+        // Calculate totals for messaging
+        const subtotal = items.reduce((s, g) => s + (Number(g.price) || 0), 0);
+        const discountAmt = DISCOUNT_PERCENT > 0 ? (subtotal * DISCOUNT_PERCENT) / 100 : 0;
+        const finalTotal = Math.max(0, subtotal - discountAmt);
+
+        try {
+          const res = await fetch('/api/cart/checkout/', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-CSRFToken': getCookie('csrftoken') || ''
+            },
+            body: ''
+          });
+          // Optionally could check res.json() for out_of_stock list
+        } catch (e) { /* ignore network errors for UX */ }
+
+        saveCart([]);
+        render();
+        const msg = DISCOUNT_PERCENT > 0
+          ? `Checkout successful. Total ${finalTotal} ฿ (after ${DISCOUNT_PERCENT}% discount)`
+          : `Checkout successful. Total ${finalTotal} ฿`;
+        showToast(msg, { duration: 2600, icon: '✅' });
+      }
+
+      function render() {
+        const items = readCart();
+        cartListEl.innerHTML = '';
+
+        if (!items.length) {
+          cartEmptyEl.classList.remove('d-none');
+          cartSummaryEl.classList.add('d-none');
+          return;
+        }
+
+        cartEmptyEl.classList.add('d-none');
+        cartSummaryEl.classList.remove('d-none');
+
+        let total = 0;
+        for (const game of items) {
+          const row = document.createElement('div');
+          row.className = 'd-flex flex-column flex-sm-row align-items-center justify-content-between gap-3 bg-body-tertiary p-3 rounded';
+          const priceNum = Number(game.price) || 0;
+          total += priceNum;
+          row.innerHTML = `
+            <div class=\"d-flex flex-column flex-sm-row align-items-center align-items-sm-start gap-3 text-center text-sm-start w-100\">
+              <img src=\"${game.image || ''}\" alt=\"${game.name || ''}\" class=\"rounded\" style=\"width:96px;height:128px;object-fit:cover;\" />
+              <div>
+                <p class=\"fs-5 fw-semibold mb-1\">${game.name || 'Untitled'}</p>
+                <p class=\"text-secondary mb-0\">${formatPrice(priceNum)}</p>
+              </div>
+            </div>
+            <button type=\"button\" class=\"btn btn-link text-danger fw-bold fs-5 mt-2 mt-sm-0\" title=\"Remove from Cart\">❌</button>
+          `;
+          row.querySelector('button').addEventListener('click', () => handleRemove(game.id));
+          cartListEl.appendChild(row);
+        }
+        // Subtotal
+        const subtotal = total;
+        cartTotalEl.textContent = formatPrice(subtotal).replace(' ฿', '') + ' ฿';
+        document.getElementById('cart-subtotal').textContent = formatPrice(subtotal);
+
+        // Discount and final total
+        const discountLine = document.getElementById('cart-discount-line');
+        const discountPercentEl = document.getElementById('cart-discount-percent');
+        const discountAmountEl = document.getElementById('cart-discount-amount');
+
+        if (DISCOUNT_PERCENT > 0) {
+          const discountAmt = (subtotal * DISCOUNT_PERCENT) / 100;
+          const finalTotal = Math.max(0, subtotal - discountAmt);
+          discountLine.classList.remove('d-none');
+          discountPercentEl.textContent = String(DISCOUNT_PERCENT);
+          discountAmountEl.textContent = formatPrice(discountAmt);
+          cartTotalEl.textContent = formatPrice(finalTotal).replace(' ฿', '') + ' ฿';
+        } else {
+          discountLine.classList.add('d-none');
+        }
+      }
+
+      document.getElementById('checkout-btn').addEventListener('click', handleCheckout);
+
+      async function syncFromServer() {
+        try {
+          const res = await fetch('/api/cart/', { credentials: 'same-origin' });
+          if (!res.ok) return false;
+          const data = await res.json();
+          if (data && Array.isArray(data.items) && data.items.length) {
+            saveCart(data.items);
+            return true;
+          }
+        } catch (e) { /* ignore */ }
+        return false;
+      }
+
+      // Initial load: try server session cart first, then fallback to localStorage
+      (async () => {
+        await syncFromServer();
+        render();
+      })();
+    })();
+  </script>
+{% endblock content %}

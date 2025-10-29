@@ -60,6 +60,12 @@ urlpatterns = [
     path('products/<int:pid>/delete/', deleteproduct, name='deleteproduct'),
     # --- Cart (user) ---
     path('cart/', cart_page, name='cart-page'),
+    # Cart API (session based)
+    path('api/cart/', cart_api_items, name='cart-api-items'),
+    path('api/cart/add/', cart_api_add, name='cart-api-add'),
+    path('api/cart/remove/', cart_api_remove, name='cart-api-remove'),
+    path('api/cart/clear/', cart_api_clear, name='cart-api-clear'),
+    path('api/cart/checkout/', cart_api_checkout, name='cart-api-checkout'),
     
 ]
 if settings.DEBUG:
