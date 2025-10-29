@@ -14,7 +14,7 @@ from django.core.files.storage import FileSystemStorage
 from django.core.files.base import ContentFile
 from .models import Contact, Action
 from django.db import transaction
-from django.db.models import F, Q
+from django.db.models import F
 from django.views.decorators.csrf import csrf_protect
 from django.contrib import messages
 
@@ -34,14 +34,6 @@ from .models import Product
 
 def home(request):
     product_list = Product.objects.all().order_by('-id')
-
-    # Filters
-    q = (request.GET.get('q') or '').strip()
-    genre = (request.GET.get('genre') or '').strip().lower()
-    if q:
-        product_list = product_list.filter(Q(title__icontains=q) | Q(description__icontains=q))
-    if genre:
-        product_list = product_list.filter(genre__iexact=genre)
     paginator = Paginator(product_list, 4)  # 4 products per page
 
     page = request.GET.get('page', 1)
@@ -52,18 +44,9 @@ def home(request):
     except EmptyPage:
         page_obj = paginator.page(paginator.num_pages)
 
-    # Build genre options from DB (distinct non-empty)
-    try:
-        all_genres = list(Product.objects.exclude(genre__isnull=True).exclude(genre__exact='').values_list('genre', flat=True).distinct())
-    except Exception:
-        all_genres = []
-
     return render(request, 'myapp/home.html', {
         'pd': page_obj.object_list,
         'page_obj': page_obj,
-        'q': q,
-        'selected_genre': genre,
-        'all_genres': all_genres,
     })
 
     
@@ -242,7 +225,6 @@ def addproduct(request):
         price = data.get('price')
         quantity = data.get('quantity')
         instock = data.get('instock')
-        genre = (data.get('genre') or '').strip().lower() or None
 
         # Create product instance (without saving yet)
         new = Product(
@@ -250,8 +232,7 @@ def addproduct(request):
             description=description,
             price=price,
             quantity=quantity,
-            instock=bool(instock),
-            genre=genre
+            instock=bool(instock)
         )
 
         # === IMAGE UPLOAD or URL ===
@@ -318,8 +299,6 @@ def editproduct(request, pid):
         product.price = data.get('price') or product.price
         product.quantity = data.get('quantity') or product.quantity
         product.instock = bool(data.get('instock'))
-        g = (data.get('genre') or '').strip().lower()
-        product.genre = g or None
 
         # Optional file replacements
         image_url = (data.get('image_url') or '').strip()

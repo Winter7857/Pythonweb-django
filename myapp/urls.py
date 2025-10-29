@@ -66,6 +66,9 @@ urlpatterns = [
     path('api/cart/remove/', cart_api_remove, name='cart-api-remove'),
     path('api/cart/clear/', cart_api_clear, name='cart-api-clear'),
     path('api/cart/checkout/', cart_api_checkout, name='cart-api-checkout'),
+
+    # --- Admin: User roles --- (avoid clashing with Django admin at /admin/)
+    path('manage/users/', user_roles, name='user-roles'),
     
 ]
 if settings.DEBUG:

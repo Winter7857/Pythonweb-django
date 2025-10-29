@@ -1,0 +1,61 @@
+{% extends 'myapp/base.html' %}
+
+{% block myheader %}
+  <h1 class="h3">👤 Manage User Roles</h1>
+{% endblock myheader %}
+
+{% block content %}
+<div class="container py-4">
+  {% if messages %}
+    {% for m in messages %}
+      <div class="alert {% if m.tags %}alert-{{ m.tags }}{% else %}alert-info{% endif %}">{{ m }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Current Role</th>
+          <th>Change To</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ u.username }}</td>
+          <td>{{ u.email }}</td>
+          <td>
+            {% if u.is_superuser or u.is_staff %}
+              <span class="badge text-bg-secondary">ADMIN</span>
+            {% else %}
+              <span class="badge text-bg-primary">{{ u.profile.usertype|default:'member'|upper }}</span>
+            {% endif %}
+          </td>
+          <td>
+            <form method="post" action="" class="d-flex gap-2 align-items-center mb-0">
+              {% csrf_token %}
+              <input type="hidden" name="user_id" value="{{ u.id }}" />
+              <select name="usertype" class="form-select form-select-sm" style="width:auto;" {% if u.is_superuser or u.is_staff %}disabled{% endif %}>
+                <option value="member" {% if u.profile.usertype|default:'member'|lower == 'member' %}selected{% endif %}>Member (5%)</option>
+                <option value="vip" {% if u.profile.usertype|default:'member'|lower == 'vip' %}selected{% endif %}>VIP (10%)</option>
+                <option value="vvip" {% if u.profile.usertype|default:'member'|lower == 'vvip' %}selected{% endif %}>VVIP (15%)</option>
+              </select>
+              <button type="submit" class="btn btn-sm btn-primary" {% if u.is_superuser or u.is_staff %}disabled{% endif %}>Update</button>
+            </form>
+          </td>
+          <td></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted">No users found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock content %}

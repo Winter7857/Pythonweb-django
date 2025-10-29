@@ -28,25 +28,6 @@
 {% block content %}
 <div class="container py-4">
   <h2 class="text-center mb-3">Welcome to My Django App</h2>
-  
-  <form method="get" class="row g-2 align-items-end mb-4" role="search">
-    <div class="col-12 col-md-6">
-      <label for="q" class="form-label">Search games</label>
-      <input type="search" id="q" name="q" class="form-control" placeholder="Search by title or description" value="{{ q|default:'' }}">
-    </div>
-    <div class="col-12 col-md-4">
-      <label for="genre" class="form-label">Genre</label>
-      <select id="genre" name="genre" class="form-select">
-        <option value="">All</option>
-        {% for g in all_genres %}
-          <option value="{{ g }}" {% if selected_genre == g %}selected{% endif %}>{{ g|upper }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-12 col-md-2 d-grid">
-      <button type="submit" class="btn btn-primary">Search</button>
-    </div>
-  </form>
 
   <div class="row justify-content-center">
     {% for data in pd %}
@@ -64,9 +45,6 @@
           {% endif %}
           <div class="card-body text-center">
             <h5 class="card-title fw-bold product-title">{{ data.title }}</h5>
-            {% if data.genre %}
-              <span class="badge rounded-pill text-bg-secondary mb-2">{{ data.genre|upper }}</span>
-            {% endif %}
             <p class="text-muted small mb-1">{{ data.description }}</p>
             <p class="mb-1 product-price">💰 <strong>{{ data.price|default:"0"|floatformat:2 }}</strong> THB</p>
             <p class="mb-1">📦 Stock: {{ data.quantity|default:0 }}</p>

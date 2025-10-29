@@ -51,21 +51,6 @@ class Product(models.Model):
     picture  = models.ImageField(upload_to="product_pics/",  null=True, blank=True)
     specfile = models.FileField(upload_to="product_specs/", null=True, blank=True)
 
-    # Optional genre/group for filtering (e.g., FPS, MMORPG, Horror)
-    GENRE_CHOICES = [
-        ("fps", "FPS"),
-        ("mmorpg", "MMORPG"),
-        ("rpg", "RPG"),
-        ("action", "Action"),
-        ("adventure", "Adventure"),
-        ("horror", "Horror"),
-        ("sport", "Sport"),
-        ("strategy", "Strategy"),
-        ("sim", "Simulation"),
-        ("other", "Other"),
-    ]
-    genre = models.CharField(max_length=32, choices=GENRE_CHOICES, null=True, blank=True)
-
     def __str__(self):
         return self.title
     

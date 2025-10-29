@@ -1,7 +1,7 @@
 {% load static %}
 
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="auto">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -9,76 +9,7 @@
     <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors" />
     <meta name="generator" content="Astro v5.9.2" />
 
-    <script>
-      (() => {
-        'use strict';
-
-        const getStoredTheme = () => localStorage.getItem('theme');
-        const setStoredTheme = (theme) => localStorage.setItem('theme', theme);
-
-        const getPreferredTheme = () => {
-          const storedTheme = getStoredTheme();
-          if (storedTheme) return storedTheme;
-          return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        };
-
-        const setTheme = (theme) => {
-          if (theme === 'auto') {
-            document.documentElement.setAttribute(
-              'data-bs-theme',
-              window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-            );
-          } else {
-            document.documentElement.setAttribute('data-bs-theme', theme);
-          }
-        };
-
-        // Set initial theme ASAP to avoid flash
-        setTheme(getPreferredTheme());
-
-        // Update on OS theme change when in auto mode
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-          const storedTheme = getStoredTheme();
-          if (storedTheme !== 'light' && storedTheme !== 'dark') {
-            setTheme(getPreferredTheme());
-          }
-        });
-
-        window.addEventListener('DOMContentLoaded', () => {
-          const activeUse = document.querySelector('.theme-icon-active use');
-          const themeSwitcher = document.querySelector('#bd-theme');
-
-          const showActiveTheme = (theme, focus = false) => {
-            const btnToActivate = document.querySelector(`[data-bs-theme-value="${theme}"]`);
-            if (!btnToActivate) return;
-
-            document.querySelectorAll('[data-bs-theme-value]').forEach((el) => el.classList.remove('active'));
-            btnToActivate.classList.add('active');
-
-            const svgUse = btnToActivate.querySelector('svg use');
-            if (svgUse && activeUse) {
-              activeUse.setAttribute('href', svgUse.getAttribute('href'));
-            }
-
-            if (themeSwitcher) themeSwitcher.setAttribute('aria-label', `Toggle theme (${theme})`);
-            if (focus && themeSwitcher) themeSwitcher.focus();
-          };
-
-          // Initialize active state
-          showActiveTheme(localStorage.getItem('theme') || 'auto');
-
-          // Hook up buttons
-          document.querySelectorAll('[data-bs-theme-value]').forEach((btn) => {
-            btn.addEventListener('click', () => {
-              const theme = btn.getAttribute('data-bs-theme-value');
-              setStoredTheme(theme);
-              setTheme(theme);
-              showActiveTheme(theme, true);
-            });
-          });
-        });
-      })();
-    </script>
+    
 
     <title>Pricing Example · Bootstrap v5.3</title>
     <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/pricing/" />
@@ -89,20 +20,59 @@
       rel="stylesheet"
     />
 
-    <!-- Favicon -->
-    <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png" sizes="180x180" />
-    <link rel="icon" href="assets/img/favicon-32x32.png" sizes="32x32" type="image/png" />
-    <link rel="icon" href="assets/img/favicon-16x16.png" sizes="16x16" type="image/png" />
-    <link rel="manifest" href="assets/img/manifest.json" />
-    <link rel="mask-icon" href="assets/img/safari-pinned-tab.svg" color="#712cf9" />
-    <link rel="icon" href="assets/img/favicon.ico" />
-    <meta name="theme-color" content="#712cf9" />
+    <!-- Favicon (optional) -->
+    <meta name="theme-color" content="#FBFBFB" />
 
     <!-- Custom CSS -->
-    <link href="pricing.css" rel="stylesheet" />
     <link rel="stylesheet" href="{% static 'css/myCss.css' %}">
 
     <style>
+      /* ColorHunt palette: #FBFBFB, #E8F9FF, #C4D9FF, #C5BAFF */
+      :root {
+        --bg: #FBFBFB;
+        --bg-elev: #E8F9FF;
+        --card-bg: #FFFFFF;
+        --text: #000000;
+        --muted: #3f4a59;
+        --accent: #C5BAFF;
+        --accent-2: #C4D9FF;
+        --border: rgba(31, 41, 55, .15);
+      }
+      html, body { background-color: var(--bg); color: var(--text); }
+      a { color: #0b5ed7; }
+      a:hover { color: #084298; }
+      .text-body-secondary, .text-muted { color: var(--muted) !important; }
+      .border-top, .border-bottom { border-color: var(--border) !important; }
+      header, .navbar { background-color: var(--accent) !important; }
+      .card, .bg-body-tertiary { background-color: var(--card-bg) !important; border-color: var(--border) !important; }
+      .btn-primary { background-color: var(--accent); border-color: var(--accent); color: #000000; }
+      .btn-primary:hover { background-color: var(--accent-2); border-color: var(--accent-2); color: #000000; }
+      .btn-outline-light { color: #000000; border-color: #000000; }
+      .btn-outline-light:hover { background-color: #000000; color: #FFFFFF; }
+      .btn-secondary { background-color: var(--accent-2); border-color: var(--accent-2); color: #000000; }
+      .dropdown-menu { background-color: var(--card-bg); color: var(--text); }
+      /* Tables (light theme) */
+      table.table { background-color: var(--card-bg); color: var(--text); border-color: var(--border); }
+      table.table thead th { background-color: var(--bg-elev); color: #000; border-color: var(--border); }
+      table.table tbody tr { border-color: var(--border); }
+      table.table tbody tr:nth-child(odd) { background-color: #F7FBFF; }
+      table.table tbody tr:nth-child(even) { background-color: #FFFFFF; }
+      .form-label, label { color: var(--text) !important; }
+      .form-control, .form-select { background-color: #FFFFFF !important; color: #000000 !important; border-color: var(--border) !important; }
+      .form-control::placeholder { color: #6b7280; }
+      .form-control:focus, .form-select:focus { background-color: #FFFFFF !important; color: #000000 !important; border-color: var(--accent-2) !important; box-shadow: 0 0 0 .25rem rgba(196,217,255,.35) !important; }
+      input:-webkit-autofill,
+      input:-webkit-autofill:hover,
+      input:-webkit-autofill:focus,
+      textarea:-webkit-autofill,
+      textarea:-webkit-autofill:focus,
+      select:-webkit-autofill,
+      select:-webkit-autofill:focus {
+        -webkit-text-fill-color: var(--text);
+        -webkit-box-shadow: 0 0 0px 1000px #FFFFFF inset;
+        box-shadow: 0 0 0px 1000px #FFFFFF inset;
+        transition: background-color 9999s ease-in-out 0s;
+      }
       .bd-placeholder-img {
         font-size: 1.125rem;
         text-anchor: middle;
@@ -178,94 +148,35 @@
   
   <body>
     <!-- Header bar styled like your example (Bootstrap utilities) -->
-    <header class="w-100 bg-dark text-white px-0 py-2 border-bottom border-secondary">
+    <header class="w-100 text-white px-0 py-2 border-bottom">
       <div class="container-fluid px-0 d-flex justify-content-between align-items-center">
         <h1 class="mb-0 fw-bold fs-3">
-          <a href="{% url 'home-page' %}" class="text-white text-decoration-none">
+          <a href="{% url 'home-page' %}" class="text-decoration-none">
             🎮 GAME STORE{% if user.is_authenticated and user.profile.usertype|lower == 'admin' %} Admin{% endif %}
           </a>
         </h1>
         <div class="d-flex gap-3 align-items-center ms-auto">
           {% if user.is_authenticated and user.profile.usertype|lower == 'admin' %}
-            <a href="{% url 'showcontact-page' %}" class="btn btn-outline-light btn-action">Show contact</a>
+            <a href="{% url 'showcontact-page' %}" class="btn btn-outline-dark btn-action">Show contact</a>
             <a href="{% url 'addproduct-page' %}" class="btn btn-success btn-action">➕ Add</a>
             <a href="{% url 'editproduct-list' %}" class="btn btn-warning text-black btn-action">✏️ Edit</a>
             <a href="{% url 'deleteproduct-list' %}" class="btn btn-danger btn-action">🗑️ Delete</a>
+            <a href="{% url 'user-roles' %}" class="btn btn-outline-dark btn-action">Users</a>
           {% endif %}
           {% if user.is_authenticated %}
-            <a href="{% url 'profile-page' %}" class="btn btn-outline-light btn-action">Profile</a>
+            <a href="{% url 'profile-page' %}" class="btn btn-outline-dark btn-action">Profile</a>
             {% if user.profile.usertype|lower != 'admin' %}
-              <a href="{% url 'cart-page' %}" class="btn btn-outline-light btn-action">🛒 Cart</a>
+              <a href="{% url 'cart-page' %}" class="btn btn-outline-dark btn-action">🛒 Cart</a>
             {% endif %}
             <a href="{% url 'logout' %}" class="btn btn-secondary btn-action">Logout</a>
           {% else %}
-            <a href="{% url 'login' %}" class="btn btn-outline-light btn-action">Login</a>
+            <a href="{% url 'login' %}" class="btn btn-outline-dark btn-action">Login</a>
           {% endif %}
         </div>
       </div>
     </header>
 
-    <!-- SVG icons for theme toggle -->
-    <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
-      <symbol id="check2" viewBox="0 0 16 16">
-        <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
-      </symbol>
-      <symbol id="circle-half" viewBox="0 0 16 16">
-        <path d="M8 15A7 7 0 1 0 8 1v14zm0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z"/>
-      </symbol>
-      <symbol id="moon-stars-fill" viewBox="0 0 16 16">
-        <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
-        <path d="M10.794 3.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.734 1.734 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162a1.734 1.734 0 0 0-1.097-1.097l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.734 1.734 0 0 0 1.097-1.097l.387-1.162z"/>
-      </symbol>
-      <symbol id="sun-fill" viewBox="0 0 16 16">
-        <path d="M8 4.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2a.5.5 0 0 1 .5-.5zM0 8a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2A.5.5 0 0 1 0 8zm13 0a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zM2.343 2.343a.5.5 0 0 1 .707 0l1.414 1.414a.5.5 0 1 1-.707.707L2.343 3.05a.5.5 0 0 1 0-.707zm9.193 9.193a.5.5 0 0 1 .707 0l1.414 1.414a.5.5 0 1 1-.707.707l-1.414-1.414a.5.5 0 0 1 0-.707zM12.657 2.343a.5.5 0 0 1 .707.707l-1.414 1.414a.5.5 0 1 1-.707-.707l1.414-1.414zm-9.193 9.193a.5.5 0 0 1 .707.707L2.343 13.657a.5.5 0 1 1-.707-.707l1.414-1.414z"/>
-      </symbol>
-    </svg>
-    <!-- Theme toggle -->
-    <div class="dropdown position-fixed bottom-0 end-0 mb-3 me-3 bd-mode-toggle">
-      <button
-        class="btn btn-bd-primary py-2 dropdown-toggle d-flex align-items-center"
-        id="bd-theme"
-        type="button"
-        aria-expanded="false"
-        data-bs-toggle="dropdown"
-        aria-label="Toggle theme (auto)"
-      >
-        <svg class="bi my-1 theme-icon-active" aria-hidden="true">
-          <use href="#circle-half"></use>
-        </svg>
-        <span class="visually-hidden" id="bd-theme-text">Toggle theme</span>
-      </button>
-      <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="bd-theme-text">
-        <li>
-          <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="light">
-            <svg class="bi me-2 opacity-50" aria-hidden="true">
-              <use href="#sun-fill"></use>
-            </svg>
-            Light
-            <svg class="bi ms-auto d-none" aria-hidden="true"><use href="#check2"></use></svg>
-          </button>
-        </li>
-        <li>
-          <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="dark">
-            <svg class="bi me-2 opacity-50" aria-hidden="true">
-              <use href="#moon-stars-fill"></use>
-            </svg>
-            Dark
-            <svg class="bi ms-auto d-none" aria-hidden="true"><use href="#check2"></use></svg>
-          </button>
-        </li>
-        <li>
-          <button type="button" class="dropdown-item d-flex align-items-center active" data-bs-theme-value="auto">
-            <svg class="bi me-2 opacity-50" aria-hidden="true">
-              <use href="#circle-half"></use>
-            </svg>
-            Auto
-            <svg class="bi ms-auto d-none" aria-hidden="true"><use href="#check2"></use></svg>
-          </button>
-        </li>
-      </ul>
-    </div>
+    
 
     <!-- Page Container -->
     <div class="container py-3">
@@ -286,7 +197,6 @@
       <footer class="pt-4 my-md-5 pt-md-5 border-top">
         <div class="row">
           <div class="col-12 col-md">
-            <img class="mb-2" src="assets/brand/bootstrap-logo.svg" alt="" width="24" height="19" />
             <small class="d-block mb-3 text-body-secondary">&copy; 2017–2025</small>
           </div>
           <div class="col-6 col-md">
@@ -331,3 +241,10 @@
     
   </body>
 </html>
+
+
+
+
+
+
+
