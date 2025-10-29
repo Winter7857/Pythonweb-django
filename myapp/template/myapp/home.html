@@ -3,7 +3,18 @@
 
 {% block myheader %}
 <link rel="stylesheet" href="{% static 'css/myCss.css' %}">
-<h1 class="display-4 text-center fw-bold my-3">CoC Gaming Shop</h1>
+<h1 class="display-4 text-center fw-bold my-3">Gaming Shop</h1>
+
+<style>
+  /* Home page background override: light blue + top bar */
+  :root {
+    --bg: #E6F2FF;      /* light blue background */
+    --bg-elev: #DCEEFF; /* slightly deeper for cards */
+    --accent: #93C5FD;  /* header/nav primary (blue-300) */
+    --accent-2: #60A5FA;/* hover/active (blue-400) */
+  }
+  html, body { background-color: var(--bg); }
+</style>
 
 {% if user.is_authenticated %}
   {% with t=user.profile.usertype|default:""|lower %}
@@ -27,7 +38,17 @@
 
 {% block content %}
 <div class="container py-4">
-  <h2 class="text-center mb-3">Welcome to My Django App</h2>
+  
+  
+  <form method="get" class="row g-2 align-items-end mb-4" role="search">
+    <div class="col-12 col-md-9">
+      <label for="q" class="form-label">Search games</label>
+      <input type="search" id="q" name="q" class="form-control" placeholder="Search by title or description" value="{{ q|default:'' }}">
+    </div>
+    <div class="col-12 col-md-3 d-grid">
+      <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+  </form>
 
   <div class="row justify-content-center">
     {% for data in pd %}
@@ -47,14 +68,9 @@
             <h5 class="card-title fw-bold product-title">{{ data.title }}</h5>
             <p class="text-muted small mb-1">{{ data.description }}</p>
             <p class="mb-1 product-price">💰 <strong>{{ data.price|default:"0"|floatformat:2 }}</strong> THB</p>
-            <p class="mb-1">📦 Stock: {{ data.quantity|default:0 }}</p>
-
-            {% if data.specfile %}
-              <p class="mt-2">
-                📁 Spec file:
-                <a href="{{ data.specfile.url }}" download class="text-decoration-none text-primary">
-                  Download
-                </a>
+            {% if data.trailer_url %}
+              <p class="mt-2 mb-0">
+                <a href="{{ data.trailer_url }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">▶ Watch Trailer</a>
               </p>
             {% endif %}
 
@@ -84,7 +100,7 @@
     <ul class="pagination justify-content-center">
       {% if page_obj.has_previous %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+          <a class="page-link" href="?{% if q %}q={{ q|urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
         </li>
       {% else %}
         <li class="page-item disabled"><span class="page-link">Previous</span></li>
@@ -92,13 +108,13 @@
 
       {% for num in page_obj.paginator.page_range %}
         <li class="page-item {% if num == page_obj.number %}active{% endif %}">
-          <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+          <a class="page-link" href="?{% if q %}q={{ q|urlencode }}&{% endif %}page={{ num }}">{{ num }}</a>
         </li>
       {% endfor %}
 
       {% if page_obj.has_next %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+          <a class="page-link" href="?{% if q %}q={{ q|urlencode }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
         </li>
       {% else %}
         <li class="page-item disabled"><span class="page-link">Next</span></li>
@@ -253,6 +269,8 @@
     });
   })();
 </script>
+
+{# Footer now provided by base.html only on home-page #}
 
 <script src="{% static 'js/myJS.js' %}"></script>
 {% endblock content %}

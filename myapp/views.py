@@ -14,9 +14,11 @@ from django.core.files.storage import FileSystemStorage
 from django.core.files.base import ContentFile
 from .models import Contact, Action
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Q
 from django.views.decorators.csrf import csrf_protect
 from django.contrib import messages
+from decimal import Decimal
+from .models import Order, OrderItem
 
 
 
@@ -34,6 +36,11 @@ from .models import Product
 
 def home(request):
     product_list = Product.objects.all().order_by('-id')
+
+    # Text search (title/description)
+    q = (request.GET.get('q') or '').strip()
+    if q:
+        product_list = product_list.filter(Q(title__icontains=q) | Q(description__icontains=q))
     paginator = Paginator(product_list, 4)  # 4 products per page
 
     page = request.GET.get('page', 1)
@@ -47,6 +54,7 @@ def home(request):
     return render(request, 'myapp/home.html', {
         'pd': page_obj.object_list,
         'page_obj': page_obj,
+        'q': q,
     })
 
     
@@ -222,17 +230,23 @@ def addproduct(request):
         data = request.POST.copy()
         title = data.get('title')
         description = data.get('description')
-        price = data.get('price')
-        quantity = data.get('quantity')
-        instock = data.get('instock')
-
-        # Create product instance (without saving yet)
+        # Sanitize numeric inputs: default to 0 if empty
+        from decimal import Decimal, InvalidOperation
+        price_raw = (data.get('price') or '').strip()
+        try:
+            price_val = Decimal(price_raw) if price_raw != '' else Decimal('0')
+        except InvalidOperation:
+            price_val = Decimal('0')
+        qty_raw = (data.get('quantity') or '').strip()
+        try:
+            quantity_val = int(qty_raw) if qty_raw != '' else 0
+        except (TypeError, ValueError):
+            quantity_val = 0
+        # Create product instance (without stock management)
         new = Product(
             title=title,
             description=description,
-            price=price,
-            quantity=quantity,
-            instock=bool(instock)
+            price=price_val,
         )
 
         # === IMAGE UPLOAD or URL ===
@@ -266,15 +280,10 @@ def addproduct(request):
             except Exception as e:
                 print('Image URL download failed:', e)
 
-        # === SPEC FILE UPLOAD ===
-        if 'specfile' in request.FILES:
-            file_specfile = request.FILES['specfile']
-            file_specfile_name = file_specfile.name.replace(' ', '_')
-            fs = FileSystemStorage(location='media/specfile/')
-            filename = fs.save(file_specfile_name, file_specfile)
-            upload_file_url = fs.url(filename)
-            print("Spec File URL:", upload_file_url)
-            new.specfile = 'specfile/' + upload_file_url[6:]
+        # === TRAILER URL ===
+        trailer_url = (data.get('trailer_url') or '').strip()
+        if trailer_url:
+            new.trailer_url = trailer_url
 
         # Save product to DB
         new.save()
@@ -297,8 +306,8 @@ def editproduct(request, pid):
         product.title = data.get('title', product.title)
         product.description = data.get('description', product.description)
         product.price = data.get('price') or product.price
-        product.quantity = data.get('quantity') or product.quantity
-        product.instock = bool(data.get('instock'))
+        # Trailer URL
+        product.trailer_url = (data.get('trailer_url') or product.trailer_url)
 
         # Optional file replacements
         image_url = (data.get('image_url') or '').strip()
@@ -375,6 +384,58 @@ def cart_page(request):
         'user_role': role,
     })
 
+# ---- Admin: Orders report ----
+@login_required
+@user_passes_test(is_admin)
+def orders_report(request):
+    qs = Order.objects.all().select_related('user').order_by('-created_at')
+
+    # Optional filters
+    start = request.GET.get('start')
+    end = request.GET.get('end')
+    user_q = request.GET.get('user')
+    if start:
+        from django.utils.dateparse import parse_datetime, parse_date
+        from django.utils.timezone import make_aware
+        from datetime import datetime, time
+        d = parse_date(start)
+        if d:
+            qs = qs.filter(created_at__gte=make_aware(datetime.combine(d, time.min)))
+    if end:
+        from django.utils.dateparse import parse_date
+        from django.utils.timezone import make_aware
+        from datetime import datetime, time
+        d = parse_date(end)
+        if d:
+            qs = qs.filter(created_at__lte=make_aware(datetime.combine(d, time.max)))
+    if user_q:
+        qs = qs.filter(user__username__icontains=user_q)
+
+    # CSV export
+    if request.GET.get('export') == 'csv':
+        import csv
+        from django.http import HttpResponse
+        resp = HttpResponse(content_type='text/csv')
+        resp['Content-Disposition'] = 'attachment; filename="orders.csv"'
+        writer = csv.writer(resp)
+        writer.writerow(['Order ID', 'User', 'Date', 'Subtotal', 'Discount %', 'Total', 'Items'])
+        for o in qs:
+            items_str = "; ".join([f"{it.name} x{it.quantity} ({it.price})" for it in o.items.all()])
+            writer.writerow([o.id, getattr(o.user, 'username', ''), o.created_at.strftime('%Y-%m-%d %H:%M'), f"{o.subtotal:.2f}", o.discount_percent, f"{o.total:.2f}", items_str])
+        return resp
+
+    # Aggregates
+    total_orders = qs.count()
+    total_revenue = qs.aggregate(s=models.Sum('total'))['s'] or Decimal('0.00')
+    return render(request, 'myapp/orders_report.html', {
+        'orders': qs[:200],  # safety cap
+        'total_orders': total_orders,
+        'total_revenue': total_revenue,
+        'start': start or '',
+        'end': end or '',
+        'user_q': user_q or '',
+    })
+
 # ---- Cart API (session-based) ----
 from django.views.decorators.http import require_http_methods
 
@@ -449,30 +510,49 @@ def cart_api_checkout(request):
         return JsonResponse({"error": "empty_cart"}, status=400)
 
     processed = []
-    out_of_stock = []
+    out_of_stock = []  # preserved for API shape, but unused now
+    items_snapshot = []  # (product, name, price)
 
     with transaction.atomic():
-        for pid in ids:
-            # Decrement quantity atomically only if in stock
-            updated = Product.objects.filter(id=pid, quantity__gt=0).update(quantity=F('quantity') - 1)
-            if updated:
-                p = Product.objects.select_for_update().get(id=pid)
-                # If quantity is None, treat as 0 after decrement protection (shouldn't happen)
-                qty = int(p.quantity or 0)
-                if qty <= 0:
-                    p.instock = False
-                p.save(update_fields=["quantity", "instock"])
-                processed.append(str(pid))
-            else:
-                out_of_stock.append(str(pid))
-
+        qs = Product.objects.filter(id__in=ids)
+        for p in qs:
+            processed.append(str(p.id))
+            items_snapshot.append((p, p.title, Decimal(p.price or 0)))
         # Clear cart after attempt
         _set_session_cart_ids(request, [])
+
+    # Create order for processed items
+    order_id = None
+    if processed:
+        try:
+            # Determine discount by role (same mapping as cart_page)
+            discount_percent = 0
+            try:
+                role = (getattr(request.user.profile, 'usertype', '') or '').lower()
+                discount_percent = {'member': 5, 'vip': 10, 'vvip': 15}.get(role, 0)
+            except Exception:
+                pass
+
+            subtotal = sum((price for (_p, _n, price) in items_snapshot), Decimal('0.00'))
+            total = subtotal * (Decimal('1.00') - Decimal(discount_percent) / Decimal('100'))
+            order = Order.objects.create(
+                user=request.user,
+                subtotal=subtotal,
+                discount_percent=discount_percent,
+                total=total,
+            )
+            order_id = order.id
+            for (prod, name, price) in items_snapshot:
+                OrderItem.objects.create(order=order, product=prod, name=name, price=price, quantity=1)
+        except Exception:
+            # Do not fail checkout if reporting fails; still return processed ids
+            order_id = None
 
     return JsonResponse({
         "ok": True,
         "processed": processed,
         "out_of_stock": out_of_stock,
+        "order_id": order_id,
     })
 
 

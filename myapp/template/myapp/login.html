@@ -35,12 +35,12 @@
       box-shadow: 0 0 0 .25rem rgba(124, 58, 237, .35) !important;
     }
     .auth-card .btn-primary {
-      background-color: #7C3AED !important; /* purple */
-      border-color: #7C3AED !important;
-      color: #FFFFFF;
-      box-shadow: 0 6px 16px rgba(124,58,237,.35);
+      background-color: #60A5FA !important; /* light blue */
+      border-color: #60A5FA !important;
+      color: #000 !important; /* readable on light blue */
+      box-shadow: 0 6px 16px rgba(96,165,250,.35);
     }
-    .auth-card .btn-primary:hover { background-color: #6D28D9 !important; border-color: #6D28D9 !important; }
+    .auth-card .btn-primary:hover { background-color: #3B82F6 !important; border-color: #3B82F6 !important; color: #fff !important; }
     /* Mobile adjustments */
     @media (max-width: 576px) {
       .auth-bg { padding-top: 1.5rem; padding-bottom: 1.5rem; }
@@ -88,7 +88,7 @@
 
               <p class="text-muted mt-3 mb-0">
                 Don’t have an account?
-                <a href="{% url 'register' %}" class="text-decoration-none" style="color: var(--accent);">Create New Account</a>
+                <a href="{% url 'register' %}" class="text-decoration-none" style="color: #3B82F6;">Create New Account</a>
               </p>
             </form>
           </div>

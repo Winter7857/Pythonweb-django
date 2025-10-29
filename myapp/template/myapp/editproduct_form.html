@@ -23,16 +23,7 @@
       <textarea name="description" class="form-control" rows="3">{{ p.description }}</textarea>
     </div>
 
-    <div class="col-md-6">
-      <label class="form-label">Quantity</label>
-      <input type="number" name="quantity" class="form-control" value="{{ p.quantity }}">
-    </div>
-    <div class="col-md-6 d-flex align-items-center">
-      <div class="form-check mt-4">
-        <input class="form-check-input" type="checkbox" name="instock" id="instock" {% if p.instock %}checked{% endif %}>
-        <label class="form-check-label" for="instock">In stock</label>
-      </div>
-    </div>
+    
 
     
 
@@ -48,12 +39,9 @@
     </div>
 
     <div class="col-md-6">
-      <label class="form-label">Spec file</label>
-      {% if p.specfile %}
-        <div class="mb-2"><a href="{{ p.specfile.url }}" download>Current file</a></div>
-      {% endif %}
-      <input type="file" name="specfile" class="form-control">
-      <div class="form-text">Leave blank to keep current spec file.</div>
+      <label class="form-label">Trailer URL (YouTube, etc.)</label>
+      <input type="url" name="trailer_url" class="form-control" value="{{ p.trailer_url }}" placeholder="https://www.youtube.com/watch?v=...">
+      <div class="form-text">Paste a link to the game's trailer video.</div>
     </div>
   </div>
 

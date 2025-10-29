@@ -69,6 +69,8 @@ urlpatterns = [
 
     # --- Admin: User roles --- (avoid clashing with Django admin at /admin/)
     path('manage/users/', user_roles, name='user-roles'),
+    # --- Admin: Orders report ---
+    path('manage/reports/orders/', orders_report, name='orders-report'),
     
 ]
 if settings.DEBUG:

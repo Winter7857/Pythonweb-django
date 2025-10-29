@@ -13,7 +13,6 @@
         <th scope="col">ID</th>
         <th scope="col">Title</th>
         <th scope="col">Price</th>
-        <th scope="col">Stock</th>
         <th scope="col">Action</th>
       </tr>
     </thead>
@@ -23,7 +22,6 @@
         <td>{{ item.id }}</td>
         <td>{{ item.title }}</td>
         <td>{{ item.price|default:"0"|floatformat:2 }} THB</td>
-        <td>{{ item.quantity|default:0 }}</td>
         <td>
           <a href="{% url 'deleteproduct' item.id %}" class="btn btn-danger btn-sm"
              onclick="return confirm('Delete {{ item.title }}? This cannot be undone.');">🗑️ Delete</a>
@@ -31,7 +29,7 @@
       </tr>
       {% empty %}
       <tr>
-        <td colspan="5" class="text-center text-muted">No products found.</td>
+        <td colspan="4" class="text-center text-muted">No products found.</td>
       </tr>
       {% endfor %}
     </tbody>

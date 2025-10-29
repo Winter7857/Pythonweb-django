@@ -3,11 +3,25 @@
 {% load static %}
 
 {% block myheader %}
-<center><h2>All Contacts</h2></center>
+<h2 class="text-center fw-bold" style="color: var(--text);">All Contacts</h2>
 {% endblock myheader %}
 
 {% block content %}
-<table class="table table-success table-striped">
+<style>
+  /* Use site theme colors for the table */
+  .table-theme { background: var(--card-bg); color: var(--text); border-color: var(--border); }
+  .table-theme thead th { background: var(--bg-elev) !important; color: var(--text) !important; }
+  .table-theme tbody tr { border-color: var(--border) !important; }
+  .table-theme tbody tr:nth-child(odd) { background-color: #F7FBFF; }
+  .table-theme tbody tr:nth-child(even) { background-color: #FFFFFF; }
+  .badge-accent { background: var(--accent-2); color: #000; }
+  .badge-muted { background: var(--bg-elev); color: var(--muted); }
+  a.link-topic { color: #0b5ed7; }
+  a.link-topic:hover { color: #084298; }
+  @media (max-width: 576px) { .table-responsive { font-size: .95rem; } }
+  </style>
+<div class="table-responsive">
+<table class="table table-theme">
   <thead>
     <tr>
       <th>#</th>
@@ -22,11 +36,17 @@
     <tr>
       <th scope="row">{{ forloop.counter }}</th>
       <td>
-        <a href="{% url 'action-page' data.id %}">{{ data.topic }}</a>
+        <a class="text-decoration-none link-topic" href="{% url 'action-page' data.id %}">{{ data.topic }}</a>
       </td>
       <td>{{ data.email }}</td>
       <td>{{ data.detail }}</td>
-      <td>{% if data.complete %}Yes{% else %}No{% endif %}</td>
+      <td>
+        {% if data.complete %}
+          <span class="badge rounded-pill badge-accent">Yes</span>
+        {% else %}
+          <span class="badge rounded-pill badge-muted">No</span>
+        {% endif %}
+      </td>
     </tr>
     {% empty %}
     <tr>
@@ -35,4 +55,5 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock content %}

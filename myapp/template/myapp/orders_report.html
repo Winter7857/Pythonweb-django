@@ -1,0 +1,75 @@
+{% extends 'myapp/base.html' %}
+
+{% block myheader %}
+  <h1 class="h3">📊 Orders Report</h1>
+{% endblock myheader %}
+
+{% block content %}
+  <div class="container py-3">
+    <form method="get" class="row g-2 align-items-end mb-3">
+      <div class="col-12 col-md-3">
+        <label class="form-label">Start date</label>
+        <input type="date" name="start" value="{{ start }}" class="form-control">
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label">End date</label>
+        <input type="date" name="end" value="{{ end }}" class="form-control">
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label">User</label>
+        <input type="text" name="user" value="{{ user_q }}" class="form-control" placeholder="username">
+      </div>
+      <div class="col-12 col-md-3 d-grid gap-2">
+        <button class="btn btn-primary" type="submit">Filter</button>
+        <a class="btn btn-outline-secondary" href="?start={{ start }}&end={{ end }}&user={{ user_q }}&export=csv">Export CSV</a>
+      </div>
+    </form>
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div>
+        <strong>Total orders:</strong> {{ total_orders }}
+      </div>
+      <div>
+        <strong>Total revenue:</strong> {{ total_revenue }} ฿
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>User</th>
+            <th>Date</th>
+            <th>Items</th>
+            <th class="text-end">Subtotal (฿)</th>
+            <th class="text-center">Disc %</th>
+            <th class="text-end">Total (฿)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in orders %}
+          <tr>
+            <td>{{ o.id }}</td>
+            <td>{{ o.user.username|default:'-' }}</td>
+            <td>{{ o.created_at|date:'Y-m-d H:i' }}</td>
+            <td>
+              {% for it in o.items.all %}
+                <span class="badge text-bg-light border">{{ it.name }} x{{ it.quantity }}</span>
+              {% empty %}
+                -
+              {% endfor %}
+            </td>
+            <td class="text-end">{{ o.subtotal }}</td>
+            <td class="text-center">{{ o.discount_percent }}</td>
+            <td class="text-end fw-semibold">{{ o.total }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="text-center text-muted">No orders yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock content %}
+

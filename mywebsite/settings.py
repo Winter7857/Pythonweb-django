@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,7 +31,14 @@ SECRET_KEY = 'django-insecure-o^2qco(snue16g)cyl$iaz^lxaxsozb+@&pl0ii&#bxww_18au
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]  # Allow all hosts for development; change in production
+# Hosts and CSRF trusted origins are configurable via env for easy sharing
+# Example (PowerShell):
+#   $env:ALLOWED_HOSTS = "127.0.0.1,localhost,192.168.1.23,example.ngrok-free.app"
+#   $env:CSRF_TRUSTED_ORIGINS = "https://example.ngrok-free.app"
+ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if h.strip()]
+_csrf_origins = os.getenv("CSRF_TRUSTED_ORIGINS", "").strip()
+if _csrf_origins:
+    CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(",") if o.strip()]
 
 
 # Application definition

@@ -34,8 +34,8 @@
         --card-bg: #FFFFFF;
         --text: #000000;
         --muted: #3f4a59;
-        --accent: #C5BAFF;
-        --accent-2: #C4D9FF;
+        --accent: #93C5FD;  /* light blue */
+        --accent-2: #60A5FA;/* light blue (darker) */
         --border: rgba(31, 41, 55, .15);
       }
       html, body { background-color: var(--bg); color: var(--text); }
@@ -147,6 +147,7 @@
   </head>
   
   <body>
+    {% block masthead %}
     <!-- Header bar styled like your example (Bootstrap utilities) -->
     <header class="w-100 text-white px-0 py-2 border-bottom">
       <div class="container-fluid px-0 d-flex justify-content-between align-items-center">
@@ -158,9 +159,18 @@
         <div class="d-flex gap-3 align-items-center ms-auto">
           {% if user.is_authenticated and user.profile.usertype|lower == 'admin' %}
             <a href="{% url 'showcontact-page' %}" class="btn btn-outline-dark btn-action">Show contact</a>
-            <a href="{% url 'addproduct-page' %}" class="btn btn-success btn-action">➕ Add</a>
-            <a href="{% url 'editproduct-list' %}" class="btn btn-warning text-black btn-action">✏️ Edit</a>
-            <a href="{% url 'deleteproduct-list' %}" class="btn btn-danger btn-action">🗑️ Delete</a>
+            <div class="dropdown">
+              <button class="btn btn-outline-dark dropdown-toggle btn-action" type="button" id="manageMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                Manage
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="manageMenu">
+                <li><a class="dropdown-item" href="{% url 'addproduct-page' %}">➕ Add product</a></li>
+                <li><a class="dropdown-item" href="{% url 'editproduct-list' %}">✏️ Edit products</a></li>
+                <li><a class="dropdown-item text-danger" href="{% url 'deleteproduct-list' %}">🗑️ Delete products</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{% url 'orders-report' %}">📊 Orders report</a></li>
+              </ul>
+            </div>
             <a href="{% url 'user-roles' %}" class="btn btn-outline-dark btn-action">Users</a>
           {% endif %}
           {% if user.is_authenticated %}
@@ -175,6 +185,7 @@
         </div>
       </div>
     </header>
+    {% endblock masthead %}
 
     
 
@@ -186,14 +197,15 @@
       
         {% endblock myheader %}
       
-<img src="{% static 'image/logo.jpg' %}" alt="logo image" width="40" height="32">
-<span class="fs-4">My Django Application</span>
+
 
       <!-- Main Content -->
         {% block content %}
         
         {% endblock content %}
-      <!-- Footer -->
+      <!-- Footer: show only on home page by default -->
+      {% block footer %}
+      {% if request.resolver_match and request.resolver_match.url_name == 'home-page' %}
       <footer class="pt-4 my-md-5 pt-md-5 border-top">
         <div class="row">
           <div class="col-12 col-md">
@@ -223,16 +235,13 @@
             <h5>About</h5>
             <ul class="list-unstyled text-small">
               <li class="mb-1"><a class="link-secondary text-decoration-none" href="{% url 'about-page' %}">About us</a></li>
-              <li class="mb-1">
-        <a class="link-secondary text-decoration-none" href="{% url 'contact-page' %}">Contact</a>
-    </li>
-              <!-- <li class="mb-1"><a class="link-secondary text-decoration-none" href="#">Locations</a></li>
-              <li class="mb-1"><a class="link-secondary text-decoration-none" href="#">Privacy</a></li>
-              <li class="mb-1"><a class="link-secondary text-decoration-none" href="#">Terms</a></li> -->
+              <li class="mb-1"><a class="link-secondary text-decoration-none" href="{% url 'contact-page' %}">Contact</a></li>
             </ul>
           </div>
         </div>
       </footer>
+      {% endif %}
+      {% endblock footer %}
     </div>
 
     <!-- Bootstrap JS (CDN) -->
