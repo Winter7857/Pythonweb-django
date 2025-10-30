@@ -1,13 +1,22 @@
 {% extends 'myapp/base.html' %}
 
 {% block myheader %}
-  <h1 class="h3">🛒 Your Cart</h1>
+<style>
+  /* Cart page background override: match Gaming Shop (light blue) */
+  :root {
+    --bg: #E6F2FF;      /* light blue background */
+    --bg-elev: #DCEEFF; /* slightly deeper for cards */
+    --accent: #93C5FD;  /* header/nav primary (blue-300) */
+    --accent-2: #60A5FA;/* hover/active (blue-400) */
+  }
+  html, body { background-color: var(--bg); }
+  .bg-body-tertiary { background-color: var(--card-bg) !important; }
+</style>
 {% endblock myheader %}
 
 {% block content %}
   <div class="container py-4">
-    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 mb-4">
-      <h2 class="mb-0 fw-bold">Your Cart</h2>
+    <div class="d-flex justify-content-end mb-4">
       <a href="{% url 'home-page' %}" class="btn btn-info text-black fw-semibold">Back to Store</a>
     </div>
 
@@ -134,30 +143,35 @@
         const items = readCart();
         if (!items.length) { showToast('Cart is empty.', { duration: 2000 }); return; }
 
-        // Calculate totals for messaging
+        // Calculate totals for confirmation text
         const subtotal = items.reduce((s, g) => s + (Number(g.price) || 0), 0);
         const discountAmt = DISCOUNT_PERCENT > 0 ? (subtotal * DISCOUNT_PERCENT) / 100 : 0;
         const finalTotal = Math.max(0, subtotal - discountAmt);
 
-        try {
-          const res = await fetch('/api/cart/checkout/', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              'X-CSRFToken': getCookie('csrftoken') || ''
-            },
-            body: ''
-          });
-          // Optionally could check res.json() for out_of_stock list
-        } catch (e) { /* ignore network errors for UX */ }
+        const confirmMsg = DISCOUNT_PERCENT > 0
+          ? `Confirm purchase of ${items.length} item(s) for ${finalTotal} ฿ (after ${DISCOUNT_PERCENT}% discount)?`
+          : `Confirm purchase of ${items.length} item(s) for ${finalTotal} ฿?`;
 
-        saveCart([]);
-        render();
-        const msg = DISCOUNT_PERCENT > 0
-          ? `Checkout successful. Total ${finalTotal} ฿ (after ${DISCOUNT_PERCENT}% discount)`
-          : `Checkout successful. Total ${finalTotal} ฿`;
-        showToast(msg, { duration: 2600, icon: '✅' });
+        showConfirmToast(confirmMsg, async () => {
+          try {
+            await fetch('/api/cart/checkout/', {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken') || ''
+              },
+              body: ''
+            });
+          } catch (e) { /* ignore network errors for UX */ }
+
+          saveCart([]);
+          render();
+          const msg = DISCOUNT_PERCENT > 0
+            ? `Checkout successful. Total ${finalTotal} ฿ (after ${DISCOUNT_PERCENT}% discount)`
+            : `Checkout successful. Total ${finalTotal} ฿`;
+          showToast(msg, { duration: 2600, icon: '✅' });
+        }, { duration: 0 });
       }
 
       function render() {

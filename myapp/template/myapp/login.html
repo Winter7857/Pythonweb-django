@@ -6,6 +6,9 @@
 
 {% block content %}
   <style>
+    /* Make page background gray and remove container padding gap */
+    html, body { background-color: #F3F4F6 !important; }
+    .container.py-3 { padding-top: 0 !important; padding-bottom: 0 !important; }
     /* Gray background theme */
     .auth-bg {
       position: relative;
@@ -13,6 +16,7 @@
       overflow: hidden;
       padding-top: 3rem;
       padding-bottom: 3rem;
+      margin-top: 0; /* sit flush with top */
       /* Full-bleed background even inside base .container */
       width: 100vw;
       left: 50%;
@@ -23,7 +27,7 @@
     }
     .auth-content { position: relative; }
     .auth-card {
-      background: #FFFFFF;
+      background: #F3F4F6; /* change white area to gray */
       border: 1px solid rgba(0,0,0,.06);
       box-shadow: 0 10px 24px rgba(0,0,0,.06);
       color: var(--text);
