@@ -66,11 +66,18 @@
           {% endif %}
           <div class="card-body text-center">
             <h5 class="card-title fw-bold product-title">{{ data.title }}</h5>
-            <p class="text-muted small mb-1">{{ data.description }}</p>
-            <p class="mb-1 product-price">💰 <strong>{{ data.price|default:"0"|floatformat:2 }}</strong> THB</p>
+            {% if data.description %}
+              <div class="mb-2">
+                <span class="meta-badge" title="Category">{{ data.description }}</span>
+              </div>
+            {% endif %}
+            <p class="mb-1 product-price" aria-label="Price"><span class="currency">&#3647;</span> <strong>{{ data.price|default:"0"|floatformat:2 }}</strong> <span class="unit">THB</span></p>
             {% if data.trailer_url %}
               <p class="mt-2 mb-0">
-                <a href="{{ data.trailer_url }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">▶ Watch Trailer</a>
+                <a href="{{ data.trailer_url }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" aria-label="Watch trailer">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="me-1" aria-hidden="true"><path d="M3 22v-20l18 10-18 10z"/></svg>
+                  Watch trailer
+                </a>
               </p>
             {% endif %}
 
@@ -128,19 +135,86 @@
   .toast-host { position: fixed; right: 16px; bottom: 16px; z-index: 1080; }
   .toast-card { background: var(--bg-elev); color: var(--text); border: 1px solid var(--border); border-radius: .5rem; padding: .6rem .9rem; min-width: 240px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
   .toast-card + .toast-card { background: var(--bg-elev); color: var(--text); border: 1px solid var(--border); border-radius: .5rem; padding: .6rem .9rem; min-width: 240px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
-  .btn.add-to-cart-btn { min-width: 160px; }
-  .product-media { position: relative; }
-  .product-img { width: 100%; aspect-ratio: 16/9; height: auto; object-fit: cover; background: var(--bg-elev); display: block; cursor: zoom-in; }
-  .view-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .18s ease-in-out; background: rgba(0,0,0,.25); z-index: 2; }
-  .view-badge { background: rgba(0,0,0,.55); color: #fff; padding: .25rem .6rem; border-radius: 9999px; font-weight: 600; font-size: .9rem; }
-  .product-media:hover .view-overlay, .product-media:focus-within .view-overlay { opacity: 1; }
-  .product-card { border-radius: .75rem; }
-  .product-title { min-height: 2.4em; }
-    /* Product card text follows theme text color */
+
+  /* Cool gradient/glass product card */
+  .product-card {
+    position: relative;
+    border-radius: 1rem;
+    border: 1px solid transparent;
+    background: linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.96)) padding-box,
+                radial-gradient(120% 120% at 0% 0%, rgba(96,165,250,.65), rgba(197,186,255,.55)) border-box;
+    box-shadow: 0 8px 26px rgba(15,23,42,.08), 0 2px 10px rgba(15,23,42,.06);
+    transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+    overflow: hidden;
+  }
+  .product-card::after {
+    content: '';
+    position: absolute; inset: 0; pointer-events: none;
+    border-radius: inherit;
+    background: radial-gradient(60% 60% at 20% 0%, rgba(255,255,255,.35), transparent 60%);
+    mix-blend-mode: soft-light;
+  }
+  .product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 42px rgba(15,23,42,.16), 0 8px 18px rgba(15,23,42,.10);
+    filter: saturate(1.06);
+  }
+
+  .product-media { position: relative; overflow: hidden; border-top-left-radius: 1rem; border-top-right-radius: 1rem; }
+  .product-img {
+    width: 100%; aspect-ratio: 16/9; height: auto;
+    object-fit: cover; background: var(--bg-elev); display: block; cursor: zoom-in;
+    transition: transform .35s ease, filter .2s ease;
+    will-change: transform;
+  }
+  .product-card:hover .product-img { transform: scale(1.04); filter: contrast(1.02) saturate(1.03); }
+
+  .view-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .2s ease-in-out, backdrop-filter .2s ease-in-out; background: linear-gradient(180deg, rgba(0,0,0,.12), rgba(0,0,0,.28)); z-index: 2; backdrop-filter: blur(0px); }
+  .product-media:hover .view-overlay, .product-media:focus-within .view-overlay { opacity: 1; backdrop-filter: blur(1.5px); }
+  .view-badge { background: rgba(0,0,0,.55); color: #fff; padding: .3rem .7rem; border-radius: 9999px; font-weight: 700; font-size: .9rem; transform: translateY(2px); transition: transform .2s ease; letter-spacing: .01em; }
+  .product-media:hover .view-badge, .product-media:focus-within .view-badge { transform: translateY(0); }
+
+  .product-title { min-height: 2.4em; font-size: 1.2rem; line-height: 1.25; }
+  @media (min-width: 768px) { .product-title { font-size: 1.35rem; } }
+
+  /* Smoother button look */
+  .btn.add-to-cart-btn { min-width: 180px; border-radius: 9999px; padding: .55rem 1.1rem; transition: transform .15s ease, box-shadow .15s ease; font-weight: 800; letter-spacing: .01em; }
+  .btn.add-to-cart-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(96,165,250,.25); }
+  .btn.add-to-cart-btn:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+  .btn.add-to-cart-btn:focus-visible { outline: 2px solid rgba(96,165,250,.6); outline-offset: 2px; }
+
+  /* Ghost button for trailer */
+  .btn-ghost { 
+    color: #0b5ed7; border: 1px solid rgba(96,165,250,.55); 
+    background: rgba(96,165,250,.10);
+    border-radius: 10rem; font-weight: 700; 
+    transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease;
+    backdrop-filter: blur(2px);
+  }
+  .btn-ghost:hover { 
+    background: rgba(96,165,250,.18); 
+    box-shadow: 0 6px 16px rgba(96,165,250,.25);
+    transform: translateY(-1px);
+  }
+  .btn-ghost:active { transform: translateY(0); }
+
+  /* Product card text follows theme text color */
   .product-card, .product-card .card-title, .product-card .product-price, .product-card p,
   .product-card .text-muted, .product-card small, .product-card a, .product-card strong {
     color: var(--text) !important;
   }
+
+  /* Professional text accents and emphasis */
+  .meta-badge { display: inline-block; padding: .35rem .7rem; border-radius: 9999px; background: rgba(196,217,255,.35); border: 1px solid var(--border); color: var(--muted); font-weight: 700; font-size: .82rem; letter-spacing: .02em; }
+  .product-price { 
+    display: inline-flex; align-items: center; gap: .25rem;
+    font-size: 1.05rem; 
+    padding: .35rem .8rem; border-radius: 9999px; 
+    background: rgba(96,165,250,.12); border: 1px solid rgba(96,165,250,.35);
+  }
+  .product-price .currency { color: var(--muted); margin-right: .15rem; }
+  .product-price .unit { color: var(--muted); margin-left: .25rem; font-weight: 700; letter-spacing: .02em; }
+  .product-card .product-price strong { font-size: 1.45rem; color: #0b0b0b !important; font-weight: 900; }
 </style>
 
 <!-- Image Modal -->
