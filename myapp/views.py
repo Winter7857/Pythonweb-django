@@ -18,7 +18,8 @@ from django.db.models import F, Q
 from django.views.decorators.csrf import csrf_protect
 from django.contrib import messages
 from decimal import Decimal
-from .models import Order, OrderItem
+from .models import Order, OrderItem, ProductRating
+from django.db.models import Avg, Count
 
 
 
@@ -35,14 +36,54 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .models import Product
 
 def home(request):
-    product_list = Product.objects.all().order_by('-id')
+    # Base queryset with rating annotations
+    base_qs = (
+        Product.objects
+        .all()
+        .annotate(
+            avg_rating=Avg('ratings__rating'),
+            rating_count=Count('ratings')
+        )
+    )
 
-    # Text search (title/description)
+    # Read filters
     q = (request.GET.get('q') or '').strip()
-    if q:
-        product_list = product_list.filter(Q(title__icontains=q) | Q(description__icontains=q))
-    paginator = Paginator(product_list, 4)  # 4 products per page
+    min_rating_raw = (request.GET.get('min_rating') or '').strip()
+    sort = (request.GET.get('sort') or 'newest').strip()
 
+    # Apply search
+    if q:
+        base_qs = base_qs.filter(Q(title__icontains=q) | Q(description__icontains=q))
+
+    # Materialize list for rating filtering and sorting only
+    all_products = list(base_qs)
+
+    # Apply min rating (on the in-memory list)
+    try:
+        min_rating = int(min_rating_raw) if min_rating_raw else 0
+    except (TypeError, ValueError):
+        min_rating = 0
+    if min_rating:
+        all_products = [p for p in all_products if (getattr(p, 'avg_rating', 0) or 0) >= min_rating]
+
+
+    # Sorting
+    # Sorting (works on list)
+    if sort == 'price_asc':
+        product_list = sorted(all_products, key=lambda p: (p.price is None, p.price, -p.id))
+    elif sort == 'price_desc':
+        product_list = sorted(all_products, key=lambda p: (p.price is None, -(p.price or 0), -p.id))
+    elif sort == 'rating_desc':
+        product_list = sorted(all_products, key=lambda p: (-(getattr(p, 'avg_rating', 0) or 0), -(getattr(p, 'rating_count', 0) or 0), -p.id))
+    elif sort == 'title_asc':
+        product_list = sorted(all_products, key=lambda p: (p.title or '').lower())
+    elif sort == 'title_desc':
+        product_list = sorted(all_products, key=lambda p: (p.title or '').lower(), reverse=True)
+    else:  # newest
+        product_list = sorted(all_products, key=lambda p: -p.id)
+
+    # Pagination
+    paginator = Paginator(product_list, 4)
     page = request.GET.get('page', 1)
     try:
         page_obj = paginator.page(page)
@@ -55,6 +96,8 @@ def home(request):
         'pd': page_obj.object_list,
         'page_obj': page_obj,
         'q': q,
+        'min_rating': min_rating,
+        'sort': sort,
     })
 
     
@@ -170,8 +213,71 @@ def userRegist(request):
 def userProfile(request):
     # make sure a profile exists for this user
     profile, _ = Profile.objects.get_or_create(user=request.user)
-    context = {"profile": profile}
+
+    # User's purchased products (unique by product)
+    items = (
+        OrderItem.objects
+        .filter(order__user=request.user)
+        .select_related('product', 'order')
+        .order_by('-order__created_at')
+    )
+    # dedupe by product keeping latest appearance
+    seen = set()
+    purchased_products = []
+    for it in items:
+        if it.product_id and it.product_id not in seen and it.product is not None:
+            seen.add(it.product_id)
+            purchased_products.append(it.product)
+
+    # User's ratings map
+    ratings = ProductRating.objects.filter(user=request.user, product__in=purchased_products)
+    ratings_by_pid = {r.product_id: r for r in ratings}
+    for p in purchased_products:
+        r = ratings_by_pid.get(p.id)
+        setattr(p, 'user_rating', r.rating if r else 0)
+
+    context = {
+        "profile": profile,
+        "purchased_products": purchased_products,
+        "ratings_by_pid": ratings_by_pid,
+    }
     return render(request, "myapp/profile.html", context)
+
+@login_required
+@csrf_protect
+def rate_product(request):
+    if request.method != 'POST':
+        return JsonResponse({"ok": False, "error": "POST required"}, status=405)
+    try:
+        product_id = int(request.POST.get('product_id') or '0')
+        stars = int(request.POST.get('rating') or '0')
+    except ValueError:
+        return JsonResponse({"ok": False, "error": "Invalid input"}, status=400)
+
+    stars = max(1, min(5, stars))
+    product = Product.objects.filter(id=product_id).first()
+    if not product:
+        return JsonResponse({"ok": False, "error": "Product not found"}, status=404)
+
+    # Optional gate: must have purchased
+    has_bought = OrderItem.objects.filter(order__user=request.user, product_id=product_id).exists()
+    if not has_bought:
+        return JsonResponse({"ok": False, "error": "Only buyers can rate"}, status=403)
+
+    rating_obj, _ = ProductRating.objects.get_or_create(user=request.user, product=product)
+    rating_obj.rating = stars
+    comment = (request.POST.get('comment') or '').strip()
+    if comment:
+        rating_obj.comment = comment
+    rating_obj.save()
+
+    agg = ProductRating.objects.filter(product=product).aggregate(avg=Avg('rating'), count=Count('id'))
+    return JsonResponse({
+        "ok": True,
+        "rating": rating_obj.rating,
+        "average": round(float(agg['avg'] or 0), 2),
+        "count": int(agg['count'] or 0),
+    })
 
 @login_required
 def editProfile(request):

@@ -26,6 +26,7 @@ from django.urls import path
 from .views import *
 from django.contrib.auth import views
 from myapp.views import userLogin   # custom login view
+from myapp import views
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf import settings
@@ -45,6 +46,7 @@ urlpatterns = [
     # --- Profile routes ---
     path("profile/", userProfile, name="profile-page"),
     path('editprofile/', editProfile, name='editprofile-page'),
+    path('rate/', views.rate_product, name='rate-product'),
 
     # --- Contact list (admin only) ---
     path('showcontact/', showContact, name='showcontact-page'),

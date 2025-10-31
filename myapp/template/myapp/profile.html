@@ -27,4 +27,85 @@
   <!-- Optional: link to an edit page if you add it later -->
   <p><a href="{% url 'editprofile-page' %}" class="btn btn-secondary text-white">Edit Profile</a></p>
 
+  <hr>
+  <h3 class="mb-3">Rate Your Purchases</h3>
+  {% if purchased_products %}
+    <ul class="list-group mb-4">
+      {% for p in purchased_products %}
+        <li class="list-group-item d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div class="d-flex align-items-center gap-3">
+            {% if p.picture %}
+              <img src="{{ p.picture.url }}" alt="{{ p.title }}" class="rounded" style="width:56px;height:56px;object-fit:cover;">
+            {% endif %}
+            <div>
+              <div class="fw-semibold">{{ p.title }}</div>
+              <div class="text-muted small">Click stars to rate</div>
+            </div>
+          </div>
+          <div class="star-control" data-product-id="{{ p.id }}" data-current-rating="{{ p.user_rating|default:0 }}" role="radiogroup" aria-label="Rate {{ p.title }}">
+            {% for i in "12345" %}
+              {% with val=forloop.counter %}
+              <button type="button" class="star" data-value="{{ val }}" aria-label="{{ val }} star{% if val > 1 %}s{% endif %}">
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/></svg>
+              </button>
+              {% endwith %}
+            {% endfor %}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-muted">No purchases yet.</p>
+  {% endif %}
+
+  <style>
+    .star-control { display: inline-flex; gap: .15rem; }
+    .star-control .star { background: transparent; border: 0; padding: .2rem; line-height: 0; color: #d1d5db; }
+    .star-control .star svg { fill: currentColor; }
+    .star-control .star.active, .star-control .star.hover { color: #f59e0b; }
+  </style>
+
+  <script>
+    (function(){
+      function getCookie(name){
+        const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return m ? m.pop() : '';
+      }
+      function paint(control, value){
+        const stars = control.querySelectorAll('.star');
+        stars.forEach((s,i)=>{
+          s.classList.toggle('active', i < value);
+        });
+      }
+      document.querySelectorAll('.star-control').forEach(ctrl =>{
+        const current = Number(ctrl.getAttribute('data-current-rating')||'0');
+        paint(ctrl, current);
+        ctrl.querySelectorAll('.star').forEach(btn =>{
+          btn.addEventListener('mouseenter', () => paint(ctrl, Number(btn.dataset.value)));
+          btn.addEventListener('mouseleave', () => paint(ctrl, Number(ctrl.getAttribute('data-current-rating')||'0')));
+          btn.addEventListener('click', async () =>{
+            const productId = ctrl.getAttribute('data-product-id');
+            const value = btn.getAttribute('data-value');
+            try{
+              const res = await fetch('{% url "rate-product" %}', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ product_id: productId, rating: value })
+              });
+              const data = await res.json();
+              if(data && data.ok){
+                ctrl.setAttribute('data-current-rating', String(value));
+                paint(ctrl, Number(value));
+              } else {
+                alert(data && data.error ? data.error : 'Failed to save rating');
+              }
+            }catch(err){
+              alert('Network error');
+            }
+          });
+        });
+      });
+    })();
+  </script>
+
 {% endblock content %}

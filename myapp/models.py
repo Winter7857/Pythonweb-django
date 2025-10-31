@@ -98,3 +98,16 @@ class OrderItem(models.Model):
 
 
 
+class ProductRating(models.Model):
+    product = models.ForeignKey(Product, related_name='ratings', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='product_ratings', on_delete=models.CASCADE)
+    rating = models.PositiveSmallIntegerField(default=0)
+    comment = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('product', 'user')
+
+    def __str__(self):
+        return f"{self.user.username} → {self.product.title}: {self.rating}"

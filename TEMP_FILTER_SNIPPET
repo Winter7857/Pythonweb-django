@@ -40,79 +40,15 @@
 <div class="container py-4">
   
   
-  <div class="row g-4">
-    <!-- Sidebar Filter -->
-    <aside class="col-12 col-lg-3">
-      <form method="get" class="card border-0 shadow-sm" style="border-radius:.75rem;">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="mb-0">Filter & Refine</h5>
-          </div>
-
-          <input type="hidden" name="q" value="{{ q|default:'' }}" />
-
-          <!-- Rating -->
-          <div class="mb-3">
-            <h6 class="mb-2">Rating</h6>
-            {% for r in "54321" %}
-              {% with val=r|add:0 %}
-              <div class="form-check mb-1">
-                <input class="form-check-input" type="radio" name="min_rating" id="minr{{ forloop.counter }}" value="{{ r }}" {% if min_rating|default:0 == r|add:0 %}checked{% endif %}>
-                <label class="form-check-label" for="minr{{ forloop.counter }}">
-                  {% for i in "12345" %}
-                    {% if forloop.counter <= r|add:0 %}
-                      <svg width="14" height="14" viewBox="0 0 24 24" style="vertical-align:-2px"><path fill="#f59e0b" d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                    {% else %}
-                      <svg width="14" height="14" viewBox="0 0 24 24" style="vertical-align:-2px"><path fill="none" stroke="#f59e0b" stroke-width="2" d="M22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24z"/></svg>
-                    {% endif %}
-                  {% endfor %}
-                  &nbsp;and up
-                </label>
-              </div>
-              {% endwith %}
-            {% endfor %}
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="min_rating" id="minr0" value="" {% if not min_rating %}checked{% endif %}>
-              <label class="form-check-label" for="minr0">Any rating</label>
-            </div>
-          </div>
-
-          <hr>
-
-          <!-- Sort -->
-          <div class="mb-3">
-            <h6 class="mb-2">Sort by</h6>
-            <select class="form-select" name="sort">
-              <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest</option>
-              <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
-              <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
-              <option value="rating_desc" {% if sort == 'rating_desc' %}selected{% endif %}>Rating: High to Low</option>
-              <option value="title_asc" {% if sort == 'title_asc' %}selected{% endif %}>Title: A → Z</option>
-              <option value="title_desc" {% if sort == 'title_desc' %}selected{% endif %}>Title: Z → A</option>
-            </select>
-          </div>
-
-          <div class="d-grid">
-            <button class="btn btn-primary" type="submit">Apply Filters</button>
-          </div>
-        </div>
-      </form>
-    </aside>
-
-    <!-- Results -->
-    <div class="col-12 col-lg-9">
-      <form method="get" class="row g-2 align-items-end mb-4" role="search">
-        <div class="col-12 col-md-9">
-          <label for="q" class="form-label">Search games</label>
-          <input type="search" id="q" name="q" class="form-control" placeholder="Search by title or description" value="{{ q|default:'' }}">
-        </div>
-        <div class="col-12 col-md-3 d-grid">
-          <button type="submit" class="btn btn-primary">Search</button>
-        </div>
-        <!-- Preserve current rating/sort when searching -->
-        <input type="hidden" name="min_rating" value="{{ min_rating|default:'' }}">
-        <input type="hidden" name="sort" value="{{ sort|default:'' }}">
-      </form>
+  <form method="get" class="row g-2 align-items-end mb-4" role="search">
+    <div class="col-12 col-md-9">
+      <label for="q" class="form-label">Search games</label>
+      <input type="search" id="q" name="q" class="form-control" placeholder="Search by title or description" value="{{ q|default:'' }}">
+    </div>
+    <div class="col-12 col-md-3 d-grid">
+      <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+  </form>
 
   <div class="row justify-content-center">
     {% for data in pd %}
@@ -197,7 +133,7 @@
     <ul class="pagination justify-content-center">
       {% if page_obj.has_previous %}
         <li class="page-item">
-          <a class="page-link" href="?{% if q %}q={{ q|urlencode }}&{% endif %}{% if min_rating %}min_rating={{ min_rating }}&{% endif %}{% if sort %}sort={{ sort|urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+          <a class="page-link" href="?{% if q %}q={{ q|urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
         </li>
       {% else %}
         <li class="page-item disabled"><span class="page-link">Previous</span></li>
@@ -205,13 +141,13 @@
 
       {% for num in page_obj.paginator.page_range %}
         <li class="page-item {% if num == page_obj.number %}active{% endif %}">
-          <a class="page-link" href="?{% if q %}q={{ q|urlencode }}&{% endif %}{% if min_rating %}min_rating={{ min_rating }}&{% endif %}{% if sort %}sort={{ sort|urlencode }}&{% endif %}page={{ num }}">{{ num }}</a>
+          <a class="page-link" href="?{% if q %}q={{ q|urlencode }}&{% endif %}page={{ num }}">{{ num }}</a>
         </li>
       {% endfor %}
 
       {% if page_obj.has_next %}
         <li class="page-item">
-          <a class="page-link" href="?{% if q %}q={{ q|urlencode }}&{% endif %}{% if min_rating %}min_rating={{ min_rating }}&{% endif %}{% if sort %}sort={{ sort|urlencode }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+          <a class="page-link" href="?{% if q %}q={{ q|urlencode }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
         </li>
       {% else %}
         <li class="page-item disabled"><span class="page-link">Next</span></li>
@@ -219,8 +155,6 @@
     </ul>
   </nav>
   {% endif %}
-    </div>
-  </div>
 </div>
 
 <style>
@@ -284,150 +218,3 @@
   .env-sub { font-size: .95rem; }
   .env-price { font-size: 1.75rem; font-weight: 900; letter-spacing: .01em; }
   .env-price .currency { color: var(--muted); margin-right: .2rem; font-size: 1.1rem; }
-  .env-price .unit { color: var(--muted); margin-left: .25rem; font-weight: 700; font-size: .95rem; }
-  .env-rating svg { vertical-align: -2px; }
-  .env-rating .star { color: #f59e0b; fill: none; stroke: #f59e0b; }
-  .env-rating .star.filled { fill: #f59e0b; stroke: #f59e0b; }
-  .env-actions .btn-preview { border-radius: 9999px; font-weight: 700; padding: .55rem 1rem; }
-  .btn-square { width: 44px; height: 44px; display: grid; place-items: center; border-radius: .6rem; }
-  /* Sidebar filters */
-  aside .card { border: 1px solid var(--border); }
-  aside .list-group-item { border: 0; padding-left: .25rem; padding-right: .25rem; }
-  aside .form-check-input { cursor: pointer; }
-  aside label { cursor: pointer; }
-</style>
-
-<!-- Image Modal -->
-<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content" style="background: transparent; border: 0;">
-      <button type="button" class="btn-close ms-auto me-2 mt-2" data-bs-dismiss="modal" aria-label="Close"></button>
-      <img id="imageModalImg" src="" alt="" class="img-fluid rounded shadow" style="display:block;">
-    </div>
-  </div>
-  
-</div>
-
-<div id="toast-root" class="toast-host"></div>
-
-<script>
-  (function () {
-    const toastRoot = document.getElementById('toast-root');
-    const imageModalEl = document.getElementById('imageModal');
-    const imageModalImg = document.getElementById('imageModalImg');
-    let imageModal;
-    function getImageModal() {
-      if (!imageModalEl) return null;
-      // Create lazily so Bootstrap can load first
-      if (!imageModal && window.bootstrap && typeof window.bootstrap.Modal === 'function') {
-        imageModal = new window.bootstrap.Modal(imageModalEl);
-      }
-      return imageModal || null;
-    }
-    function showToast(message, opts) {
-      const duration = (opts && opts.duration) || 1800;
-      const icon = (opts && opts.icon) || '';
-      const el = document.createElement('div');
-      el.className = 'toast-card';
-      el.innerHTML = `<div>${icon ? `<span class=\"me-2\">${icon}</span>` : ''}${message}</div>`;
-      toastRoot.appendChild(el);
-      setTimeout(() => el.remove(), duration);
-    }
-
-    function readCart() {
-      try {
-        const raw = localStorage.getItem('cart');
-        return raw ? JSON.parse(raw) : [];
-      } catch (_) { return []; }
-    }
-    function saveCart(items) {
-      localStorage.setItem('cart', JSON.stringify(items || []));
-    }
-    function getCookie(name) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop().split(';').shift();
-    }
-
-    async function addToServerCart(productId) {
-      try {
-        const res = await fetch('/api/cart/add/', {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-CSRFToken': getCookie('csrftoken') || ''
-          },
-          body: new URLSearchParams({ product_id: String(productId) })
-        });
-        return res.ok;
-      } catch (_) {
-        return false;
-      }
-    }
-
-    function onAddClick(btn) {
-      const id = btn.getAttribute('data-product-id');
-      const name = btn.getAttribute('data-name') || '';
-      const price = Number(btn.getAttribute('data-price') || '0');
-      const image = btn.getAttribute('data-image') || '';
-
-      const cart = readCart();
-      if (!cart.some(g => String(g.id) === String(id))) {
-        cart.push({ id: String(id), name, price, image });
-        saveCart(cart);
-      }
-      showToast('Added to cart', { icon: '🛒', duration: 1500 });
-      // Fire-and-forget server sync for logged-in users
-      addToServerCart(id);
-    }
-
-    document.addEventListener('click', function (e) {
-      const target = e.target.closest('.add-to-cart-btn');
-      if (target) {
-        e.preventDefault();
-        onAddClick(target);
-      }
-      const imgEl = e.target.closest('.js-view-full');
-      if (imgEl && imageModalImg) {
-        e.preventDefault();
-        const full = imgEl.getAttribute('data-full-src') || imgEl.getAttribute('src');
-        imageModalImg.src = full || '';
-        imageModalImg.alt = imgEl.getAttribute('alt') || 'Product image';
-        const modal = getImageModal();
-        if (modal) {
-          modal.show();
-        } else if (full) {
-          // Fallback: open in new tab if Bootstrap not loaded yet
-          window.open(full, '_blank');
-        }
-      }
-    });
-
-    document.addEventListener('keydown', function (e) {
-      if ((e.key === 'Enter' || e.key === ' ') && document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('js-view-full')) {
-        e.preventDefault();
-        const imgEl = document.activeElement;
-        if (imageModalImg) {
-          const full = imgEl.getAttribute('data-full-src') || imgEl.getAttribute('src');
-          imageModalImg.src = full || '';
-          imageModalImg.alt = imgEl.getAttribute('alt') || 'Product image';
-          const modal = getImageModal();
-          if (modal) {
-            modal.show();
-          } else if (full) {
-            window.open(full, '_blank');
-          }
-        }
-      }
-    });
-  })();
-</script>
-
-{# Footer now provided by base.html only on home-page #}
-
-<script src="{% static 'js/myJS.js' %}"></script>
-{% endblock content %}
-
-
-
