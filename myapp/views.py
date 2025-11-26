@@ -49,11 +49,39 @@ def home(request):
     # Read filters
     q = (request.GET.get('q') or '').strip()
     min_rating_raw = (request.GET.get('min_rating') or '').strip()
+    price_min_raw = (request.GET.get('price_min') or '').strip()
+    price_max_raw = (request.GET.get('price_max') or '').strip()
     sort = (request.GET.get('sort') or 'newest').strip()
 
     # Apply search
     if q:
         base_qs = base_qs.filter(Q(title__icontains=q) | Q(description__icontains=q))
+
+    # Apply price range (on queryset)
+    price_min = None
+    price_max = None
+    try:
+        if price_min_raw != '':
+            price_min = Decimal(price_min_raw)
+            if price_min < 0:
+                price_min = Decimal('0')
+    except (ArithmeticError, ValueError):
+        price_min = None
+    try:
+        if price_max_raw != '':
+            price_max = Decimal(price_max_raw)
+            if price_max < 0:
+                price_max = None
+    except (ArithmeticError, ValueError):
+        price_max = None
+    # Normalize if min > max
+    if price_min is not None and price_max is not None and price_min > price_max:
+        price_min, price_max = price_max, price_min
+
+    if price_min is not None:
+        base_qs = base_qs.filter(price__gte=price_min)
+    if price_max is not None:
+        base_qs = base_qs.filter(price__lte=price_max)
 
     # Materialize list for rating filtering and sorting only
     all_products = list(base_qs)
@@ -98,6 +126,8 @@ def home(request):
         'q': q,
         'min_rating': min_rating,
         'sort': sort,
+        'price_min': (str(price_min) if price_min is not None else ''),
+        'price_max': (str(price_max) if price_max is not None else ''),
     })
 
     

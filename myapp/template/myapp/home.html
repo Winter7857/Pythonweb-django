@@ -77,6 +77,21 @@
             </div>
           </div>
 
+          <!-- Price range -->
+          <div class="mb-3">
+            <h6 class="mb-2">Price range</h6>
+            <div class="row g-2 align-items-center">
+              <div class="col-6">
+                <label for="price_min" class="form-label small mb-1">Min</label>
+                <input type="number" step="0.01" min="0" name="price_min" id="price_min" class="form-control" value="{{ price_min|default:'' }}" placeholder="0.00">
+              </div>
+              <div class="col-6">
+                <label for="price_max" class="form-label small mb-1">Max</label>
+                <input type="number" step="0.01" min="0" name="price_max" id="price_max" class="form-control" value="{{ price_max|default:'' }}" placeholder="9999.99">
+              </div>
+            </div>
+          </div>
+
           <hr>
 
           <!-- Sort -->
@@ -112,6 +127,8 @@
         <!-- Preserve current rating/sort when searching -->
         <input type="hidden" name="min_rating" value="{{ min_rating|default:'' }}">
         <input type="hidden" name="sort" value="{{ sort|default:'' }}">
+        <input type="hidden" name="price_min" value="{{ price_min|default:'' }}">
+        <input type="hidden" name="price_max" value="{{ price_max|default:'' }}">
       </form>
 
   <div class="row justify-content-center">
@@ -137,7 +154,6 @@
                 <div class="env-price mb-1" aria-label="Price">
                   <span class="currency">&#3647;</span>
                   <strong>{{ data.price|default:"0"|floatformat:2 }}</strong>
-                  <span class="unit">THB</span>
                 </div>
                 <div class="env-rating">
                   {% with avg=data.avg_rating count=data.rating_count %}
@@ -197,7 +213,7 @@
     <ul class="pagination justify-content-center">
       {% if page_obj.has_previous %}
         <li class="page-item">
-          <a class="page-link" href="?{% if q %}q={{ q|urlencode }}&{% endif %}{% if min_rating %}min_rating={{ min_rating }}&{% endif %}{% if sort %}sort={{ sort|urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+          <a class="page-link" href="?{% if q %}q={{ q|urlencode }}&{% endif %}{% if min_rating %}min_rating={{ min_rating }}&{% endif %}{% if price_min %}price_min={{ price_min }}&{% endif %}{% if price_max %}price_max={{ price_max }}&{% endif %}{% if sort %}sort={{ sort|urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
         </li>
       {% else %}
         <li class="page-item disabled"><span class="page-link">Previous</span></li>
@@ -205,13 +221,13 @@
 
       {% for num in page_obj.paginator.page_range %}
         <li class="page-item {% if num == page_obj.number %}active{% endif %}">
-          <a class="page-link" href="?{% if q %}q={{ q|urlencode }}&{% endif %}{% if min_rating %}min_rating={{ min_rating }}&{% endif %}{% if sort %}sort={{ sort|urlencode }}&{% endif %}page={{ num }}">{{ num }}</a>
+          <a class="page-link" href="?{% if q %}q={{ q|urlencode }}&{% endif %}{% if min_rating %}min_rating={{ min_rating }}&{% endif %}{% if price_min %}price_min={{ price_min }}&{% endif %}{% if price_max %}price_max={{ price_max }}&{% endif %}{% if sort %}sort={{ sort|urlencode }}&{% endif %}page={{ num }}">{{ num }}</a>
         </li>
       {% endfor %}
 
       {% if page_obj.has_next %}
         <li class="page-item">
-          <a class="page-link" href="?{% if q %}q={{ q|urlencode }}&{% endif %}{% if min_rating %}min_rating={{ min_rating }}&{% endif %}{% if sort %}sort={{ sort|urlencode }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+          <a class="page-link" href="?{% if q %}q={{ q|urlencode }}&{% endif %}{% if min_rating %}min_rating={{ min_rating }}&{% endif %}{% if price_min %}price_min={{ price_min }}&{% endif %}{% if price_max %}price_max={{ price_max }}&{% endif %}{% if sort %}sort={{ sort|urlencode }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
         </li>
       {% else %}
         <li class="page-item disabled"><span class="page-link">Next</span></li>
