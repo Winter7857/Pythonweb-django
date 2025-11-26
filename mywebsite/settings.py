@@ -165,3 +165,10 @@ LOGIN_EXEMPT_URLS = (
     r'^/admin/login/.*',
     r'^/admin/.*',
 )
+ALLOWED_HOSTS = ['.vercel.app', '127.0.0.1']
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+MIDDLEWARE = [
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    ...
+]
