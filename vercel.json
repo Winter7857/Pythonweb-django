@@ -1,15 +1,24 @@
+
 {
   "version": 2,
-  "installCommand": "pip install -r requirements.txt",
-  "buildCommand": "python manage.py collectstatic --noinput",
-  "functions": {
-    "api/index.py": {
-      "runtime": "python3.11"
+  "builds": [
+    {
+      "src": "manage.py",
+      "use": "@vercel/python"
     }
-  },
-  "rewrites": [
-    { "source": "/static/(.*)", "destination": "/staticfiles/$1" },
-    { "source": "/media/(.*)", "destination": "/media/$1" },
-    { "source": "/(.*)", "destination": "/api/index.py" }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/staticfiles/$1"
+    },
+    {
+      "src": "/media/(.*)",
+      "dest": "/media/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "manage.py"
+    }
   ]
 }
