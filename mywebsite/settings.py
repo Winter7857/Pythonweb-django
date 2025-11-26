@@ -12,13 +12,14 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# (optional but typical)
+# Static files
 STATIC_URL = '/static/'
 # STATICFILES_DIRS = [BASE_DIR / 'static']  # if you have a project-level /static
 
@@ -29,26 +30,19 @@ STATIC_URL = '/static/'
 SECRET_KEY = 'django-insecure-o^2qco(snue16g)cyl$iaz^lxaxsozb+@&pl0ii&#bxww_18au'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
 # Hosts and CSRF trusted origins are configurable via env for easy sharing
 # Example (PowerShell):
-#   $env:ALLOWED_HOSTS = "127.0.0.1,localhost,192.168.1.23,example.ngrok-free.app"
-#   $env:CSRF_TRUSTED_ORIGINS = "https://example.ngrok-free.app"
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if h.strip()]
+#   $env:ALLOWED_HOSTS = "127.0.0.1,localhost,192.168.1.23,example.com"
+#   $env:CSRF_TRUSTED_ORIGINS = "https://example.com"
+# ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if h.strip()]
+ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost,.vercel.app,.now.sh").split(",") if h.strip()]
 _csrf_origins = os.getenv("CSRF_TRUSTED_ORIGINS", "").strip()
 if _csrf_origins:
     CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(",") if o.strip()]
-
-# In DEBUG, allow ngrok by default to simplify sharing
-if DEBUG:
-    if '.ngrok-free.app' not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS += ['.ngrok-free.app']  # matches any subdomain
-    if 'CSRF_TRUSTED_ORIGINS' in globals():
-        if 'https://*.ngrok-free.app' not in CSRF_TRUSTED_ORIGINS:
-            CSRF_TRUSTED_ORIGINS += ['https://*.ngrok-free.app']
-    else:
-        CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.app']
+else:
+    CSRF_TRUSTED_ORIGINS = ["https://*.vercel.app"]
 
 
 # Application definition
@@ -66,6 +60,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -105,6 +100,9 @@ DATABASES = {
     }
 }
 
+if os.getenv("DATABASE_URL"):
+    DATABASES["default"] = dj_database_url.config(conn_max_age=600, ssl_require=True)
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -140,8 +138,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR/'static']
+STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -165,10 +164,10 @@ LOGIN_EXEMPT_URLS = (
     r'^/admin/login/.*',
     r'^/admin/.*',
 )
-ALLOWED_HOSTS = ['.vercel.app', '127.0.0.1']
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-MIDDLEWARE = [
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    ...
-]
+# ALLOWED_HOSTS = ['.vercel.app', '127.0.0.1']
+# STATIC_URL = '/static/'
+# STATIC_ROOT = BASE_DIR / 'staticfiles'
+# MIDDLEWARE = [
+#     'whitenoise.middleware.WhiteNoiseMiddleware',
+#     ...
+# ]
