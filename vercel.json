@@ -1,14 +1,15 @@
 {
   "version": 2,
-  "buildCommand": "pip install -r requirements.txt && python manage.py collectstatic --noinput",
+  "installCommand": "pip install -r requirements.txt",
+  "buildCommand": "python manage.py collectstatic --noinput",
   "functions": {
     "api/index.py": {
       "runtime": "python3.11"
     }
   },
-  "routes": [
-    { "src": "/static/(.*)", "dest": "/staticfiles/$1" },
-    { "src": "/media/(.*)", "dest": "/media/$1" },
-    { "src": "/(.*)", "dest": "/api/index.py" }
+  "rewrites": [
+    { "source": "/static/(.*)", "destination": "/staticfiles/$1" },
+    { "source": "/media/(.*)", "destination": "/media/$1" },
+    { "source": "/(.*)", "destination": "/api/index.py" }
   ]
 }
