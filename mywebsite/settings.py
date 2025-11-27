@@ -37,7 +37,7 @@ DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 #   $env:ALLOWED_HOSTS = "127.0.0.1,localhost,192.168.1.23,example.com"
 #   $env:CSRF_TRUSTED_ORIGINS = "https://example.com"
 # ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if h.strip()]
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost,.onrender.com").split(",") if h.strip()]
+ALLOWED_HOSTS = ['*']
 _csrf_origins = os.getenv("CSRF_TRUSTED_ORIGINS", "").strip()
 if _csrf_origins:
     CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(",") if o.strip()]
@@ -68,6 +68,7 @@ MIDDLEWARE = [
     'mywebsite.middleware.LoginRequiredMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'mywebsite.urls'
@@ -93,13 +94,19 @@ WSGI_APPLICATION = 'mywebsite.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        # Replace this value with your local database URL if you want to run locally
+        default='sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3'),
+        conn_max_age=600
+    )
 }
-
 if os.getenv("DATABASE_URL"):
     DATABASES["default"] = dj_database_url.config(conn_max_age=600, ssl_require=True)
 
