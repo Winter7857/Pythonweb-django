@@ -1,7 +1,7 @@
 Django==5.2.5
 whitenoise==6.7.0
 dj-database-url==2.1.0
-psycopg[binary]==3.1.18
+psycopg[binary]==3.2.13
 # Required for Django on Vercel
 gunicorn
 pillow
