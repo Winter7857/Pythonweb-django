@@ -23,7 +23,7 @@ env/
 # Django collected/static/media (if generated)
 staticfiles/
 static/
-media/
+
 
 # --- Env/Secrets ---
 .env
