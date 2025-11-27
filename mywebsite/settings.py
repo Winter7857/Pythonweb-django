@@ -30,7 +30,7 @@ STATIC_URL = '/static/'
 SECRET_KEY = 'django-insecure-o^2qco(snue16g)cyl$iaz^lxaxsozb+@&pl0ii&#bxww_18au'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "True").lower() == "true"
+DEBUG = True
 
 # Hosts and CSRF trusted origins are configurable via env for easy sharing
 # Example (PowerShell):
