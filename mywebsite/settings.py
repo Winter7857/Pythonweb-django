@@ -37,12 +37,12 @@ DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 #   $env:ALLOWED_HOSTS = "127.0.0.1,localhost,192.168.1.23,example.com"
 #   $env:CSRF_TRUSTED_ORIGINS = "https://example.com"
 # ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if h.strip()]
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost,.vercel.app,.now.sh").split(",") if h.strip()]
+ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost,.onrender.com").split(",") if h.strip()]
 _csrf_origins = os.getenv("CSRF_TRUSTED_ORIGINS", "").strip()
 if _csrf_origins:
     CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(",") if o.strip()]
 else:
-    CSRF_TRUSTED_ORIGINS = ["https://*.vercel.app"]
+    CSRF_TRUSTED_ORIGINS = ["https://*.onrender.com"]
 
 
 # Application definition

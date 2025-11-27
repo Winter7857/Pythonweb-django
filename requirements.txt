@@ -5,3 +5,5 @@ psycopg[binary]==3.1.18
 # Required for Django on Vercel
 gunicorn
 pillow
+dj-database-url
+psycopg[binary]
